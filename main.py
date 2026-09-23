@@ -1,6 +1,9 @@
 import argparse
+import re
 import sys
 from pathlib import Path
+
+from phonemizer import phonemize
 
 if __package__:
     from .converter import ipa_to_vie
@@ -10,25 +13,91 @@ else:
     from vietify.converter import ipa_to_vie
 
 
+PHONEMIZER_LANGUAGES = {
+    "en": "en-us",
+    "fr": "fr-fr",
+    "de": "de",
+}
+
+
+def normalize_phonemized_ipa(ipa: str) -> str:
+    return (
+        ipa.replace("ː", "")
+        .replace("̃", "")
+        .replace("ɚ", "əɹ")
+        .replace("ɝ", "əɹ")
+        .replace("ɾ", "r")
+        .replace("ʁ", "r")
+        .replace("ɲ", "n")
+        .replace("ɥ", "w")
+        .replace("r", "ɹ")
+        .replace("l", "ɫ")
+        .replace("ʌ", "ɑ")
+    )
+
+
+def text_to_vietify(text: str, language: str) -> str:
+    if language == "ipa":
+        ipa = text
+    else:
+        ipa = phonemize(
+            text,
+            language=PHONEMIZER_LANGUAGES[language],
+            backend="espeak",
+            strip=True,
+            preserve_punctuation=True,
+        )
+
+    ipa = normalize_phonemized_ipa(ipa)
+    converted_words = []
+
+    for word in ipa.split():
+        match = re.match(r"^([^\w]*)(.*?)([^\w]*)$", word, re.UNICODE)
+        if not match or not match.group(2):
+            converted_words.append(word)
+            continue
+
+        leading, pronunciation, trailing = match.groups()
+        results = ipa_to_vie(pronunciation)
+        if not results:
+            raise ValueError(f"could not parse IPA text: {pronunciation!r}")
+
+        converted_words.append(
+            leading
+            + "-".join(result["vie"] for result in results)
+            + trailing
+        )
+
+    return " ".join(converted_words)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Convert English IPA pronunciation to Vietnamese spelling.",
+        description=(
+            "Convert text or IPA pronunciation to Vietnamese spelling."
+        ),
     )
     parser.add_argument(
-        "ipa",
+        "text",
         nargs="+",
-        help="IPA text to convert. Keep stress marks such as ˈ when available.",
+        help="Text to convert, or IPA text when --language=ipa.",
+    )
+    parser.add_argument(
+        "-l",
+        "--language",
+        choices=("en", "fr", "de", "ipa"),
+        default="en",
+        help=(
+            "Input language: en (English), fr (French), de (German), "
+            "or ipa (already-transcribed IPA). Default: en."
+        ),
     )
     args = parser.parse_args()
 
-    input_text = " ".join(args.ipa)
-    results = ipa_to_vie(input_text)
-
-    if not results:
-        parser.error("could not parse the supplied IPA text")
-
-    for result in results:
-        print(result["vie"])
+    try:
+        print(text_to_vietify(" ".join(args.text), args.language))
+    except (OSError, RuntimeError, ValueError) as error:
+        parser.error(str(error))
 
     return 0
 

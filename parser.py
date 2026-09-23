@@ -119,7 +119,7 @@ class Visitor(NodeVisitor):
 
     def visit_Word(self, node, children):
         _, _, syllables, _, _ = children
-        return syllables
+        return syllables if isinstance(syllables, list) else [syllables]
 
     def visit_Syllable(self, node, children):
         # Optional expressions that do not match are omitted from
