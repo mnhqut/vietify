@@ -1,4 +1,4 @@
-from .constant import ENDING_VOWEL_MAPPING
+from .vietifyRuleStrong import ENDING_VOWEL_MAPPING
 
 
 def main():

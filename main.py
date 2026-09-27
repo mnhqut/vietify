@@ -2,8 +2,12 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from typing import Literal
 
 from phonemizer import phonemize
+
+# from .converter import ipa_to_vie
+from typing import cast
 
 if __package__:
     from .converter import ipa_to_vie
@@ -25,29 +29,38 @@ def normalize_phonemized_ipa(ipa: str) -> str:
         ipa.replace("ː", "")
         .replace("̃", "")
         .replace("ɚ", "əɹ")
-        .replace("ɝ", "əɹ")
+        # .replace("ɝ", "əɹ")
+        .replace("ɜ", "ə")
+        .replace("ɐ", "ə")
+        .replace("ᵻ", "ɪ")
         .replace("ɾ", "r")
-        .replace("ʁ", "r")
-        .replace("ɲ", "n")
+        # .replace("ʁ", "r")
+        # .replace("ɲ", "n")
         .replace("ɥ", "w")
-        .replace("r", "ɹ")
-        .replace("l", "ɫ")
+        # .replace("r", "ɹ")
+        # .replace("l", "ɫ")
         .replace("ʌ", "ɑ")
     )
 
 
-def text_to_vietify(text: str, language: str) -> str:
+def text_to_vietify(
+    text: str,
+    language: str,
+    mode: Literal["weak", "strong"] = "strong",
+) -> str:
     if language == "ipa":
         ipa = text
     else:
-        ipa = phonemize(
-            text,
-            language=PHONEMIZER_LANGUAGES[language],
-            backend="espeak",
-            strip=True,
-            preserve_punctuation=True,
+        ipa = cast(
+            str,
+            phonemize(
+                text,
+                language=PHONEMIZER_LANGUAGES[language],
+                backend="espeak",
+                strip=True,
+                preserve_punctuation=True,
+            ),
         )
-
     ipa = normalize_phonemized_ipa(ipa)
     converted_words = []
 
@@ -58,7 +71,7 @@ def text_to_vietify(text: str, language: str) -> str:
             continue
 
         leading, pronunciation, trailing = match.groups()
-        results = ipa_to_vie(pronunciation)
+        results = ipa_to_vie(pronunciation, mode=mode)
         if not results:
             raise ValueError(f"could not parse IPA text: {pronunciation!r}")
 
@@ -92,10 +105,23 @@ def main() -> int:
             "or ipa (already-transcribed IPA). Default: en."
         ),
     )
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=("weak", "strong"),
+        default="weak",
+        help="Conversion rule mode: weak or strong. Default: strong.",
+    )
     args = parser.parse_args()
 
     try:
-        print(text_to_vietify(" ".join(args.text), args.language))
+        print(
+            text_to_vietify(
+                " ".join(args.text),
+                args.language,
+                args.mode,
+            )
+        )
     except (OSError, RuntimeError, ValueError) as error:
         parser.error(str(error))
 

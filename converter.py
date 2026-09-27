@@ -1,15 +1,37 @@
 import re
 import unicodedata
+from typing import Literal, Protocol
 
-from .constant import (
+from . import vietifyRuleStrong, vietifyRuleWeak
+from .vietifyRuleStrong import (
     COMBINE_ACUTE,
     COMBINE_DOT,
     COMBINE_GRAVE,
-    ENDING_VOWEL_MAPPING,
-    LETTER_MAPPING,
-    NULL_MAPPING,
 )
 from .parser import parse
+
+RuleMode = Literal["weak", "strong"]
+
+
+class ConversionRules(Protocol):
+    ENDING_VOWEL_MAPPING: dict[str, str]
+    LETTER_MAPPING: dict[str, str]
+    NULL_MAPPING: Literal["_"]
+
+
+_RULES: dict[RuleMode, ConversionRules] = {
+    "weak": vietifyRuleWeak,
+    "strong": vietifyRuleStrong,
+}
+
+
+def _rules_for_mode(mode: RuleMode) -> ConversionRules:
+    try:
+        return _RULES[mode]
+    except KeyError:
+        raise ValueError(
+            f"mode must be 'weak' or 'strong', got {mode!r}"
+        ) from None
 
 
 def normalize_nfc(value: str) -> str:
@@ -95,17 +117,19 @@ def syllable_to_vie(
     syllable: dict,
     options: dict | None = None,
     is_last_syllable: bool = False,
+    mode: RuleMode = "strong",
 ) -> str:
     options = options or {}
+    rules = _rules_for_mode(mode)
 
     head = syllable["parts"][0] or ""
     tail = syllable["parts"][1] or ""
 
-    is_null_vowel = tail not in ENDING_VOWEL_MAPPING
+    is_null_vowel = tail not in rules.ENDING_VOWEL_MAPPING
 
     vie_syllable = (
-        LETTER_MAPPING.get(head, "")
-        + ENDING_VOWEL_MAPPING.get(tail, NULL_MAPPING)
+        rules.LETTER_MAPPING.get(head, "")
+        + rules.ENDING_VOWEL_MAPPING.get(tail, rules.NULL_MAPPING)
     )
 
     # Equivalent to JS:
@@ -208,8 +232,10 @@ def syllable_to_vie(
 def ipa_to_vie(
     ipa: str,
     options: dict | None = None,
+    mode: RuleMode = "strong",
 ) -> list[dict]:
     options = options or {}
+    _rules_for_mode(mode)
     results = []
 
     for item in ipa.split(", "):
@@ -278,6 +304,7 @@ def ipa_to_vie(
                     is_last_syllable=(
                         idx == last_syllable_idx
                     ),
+                    mode=mode,
                 )
 
                 if idx != 0 and vie_syl:
