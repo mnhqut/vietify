@@ -172,6 +172,11 @@ LETTER_MAPPING: dict[str, str] = {
     "ˈ": " ",
     "ˌ": "",
 
+    # t aspiration rule
+   "ˈt": "th",
+    "ˌt": "th",
+    "t": "t",  
+
     "a": "a",
     "b": "b",
     "d": "đ",
@@ -191,7 +196,7 @@ LETTER_MAPPING: dict[str, str] = {
     "v": "v",
     "w": "w",
     "ŋ": "ng",
-    "t": "t",  ## should set up rule when t is aspirated and when not
+
     "ɔ": "o",
     "ə": "ơ",
     "ɛ": "ê",

@@ -127,6 +127,11 @@ ENDING_VOWEL_MAPPING: dict[str, str] = {
 
 
 LETTER_MAPPING: dict[str, str] = {
+    # t aspiration rule
+    "ˈt": "th",
+    "ˌt": "th",
+    "t": "th",
+
     " ": "",
     ",": "",
     "/": "",
@@ -146,7 +151,6 @@ LETTER_MAPPING: dict[str, str] = {
     "o": "â",
     "p": "p",
     "s": "x",
-    "t": "th",
     "tɹ": "tr",
     "tʃ": "ch",
     "u": "u",
