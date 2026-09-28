@@ -113,216 +113,291 @@ def vie_consonant_rule(consonant: str, vowel: str) -> str:
     return consonant + vowel
 
 
+_VIE_SYLLABLE_REPLACEMENTS = {
+    "wi": "uy",
+    "wa": "oa",
+    "wâ": "uâ",
+    "we": "oe",
+    "wơ": "uơ",
+    "ge": "ghe",
+    "gi": "ghi",
+    "gê": "ghê",
+    "qui": "quy",
+}
+
+_VIE_SYLLABLE_PATTERN = re.compile(
+    r"wi|wa|wâ|we|wơ|ge|gi(?!a)|gê|qui"
+    # r"wi|wa|wâ|we|wơ|ge|gê|qui"
+)
+
+_ENDING_REPLACEMENTS = {
+    "ki": "ky",
+    "li": "ly",
+    "mi": "my",
+    "si": "sy",
+    "ti": "ty",
+    "hi": "hy",
+}
+
+_ENDING_PATTERN = re.compile(
+    r"ki$|li$|mi$|si$|ti$|hi$"
+)
+
+
+def _replace_vie_syllable_patterns(vie: str) -> str:
+    return _VIE_SYLLABLE_PATTERN.sub(
+        lambda match: _VIE_SYLLABLE_REPLACEMENTS[match.group(0)],
+        vie,
+    )
+
+
+def _apply_vowel_epenthesis(
+    vie: str,
+    options: dict,
+) -> str:
+    vowel_epenthesis = options.get("vowelEpenthesis", {})
+
+    def replace_epenthesis(match: re.Match) -> str:
+        consonant = match.group(0)[0]
+        replacement = vowel_epenthesis.get(
+            "replacement",
+            "ơ",
+        )
+        return vie_consonant_rule(
+            consonant,
+            replacement,
+        )
+
+    return re.sub(
+        r"._",
+        replace_epenthesis,
+        vie,
+    )
+
+
+def _apply_ending_replacements(vie: str) -> str:
+    return _ENDING_PATTERN.sub(
+        lambda match: _ENDING_REPLACEMENTS[match.group(0)],
+        vie,
+    )
+
+
+def _apply_initial_consonant_rule(vie: str) -> str:
+    return re.sub(
+        r"^[kc].",
+        lambda match: vie_consonant_rule(
+            match.group(0)[0],
+            match.group(0)[1],
+        ),
+        vie,
+    )
+
+
+def _should_skip_vowel_epenthesis(
+    options: dict,
+    is_last_syllable: bool,
+) -> bool:
+    vowel_epenthesis = options.get("vowelEpenthesis", {})
+
+    return (
+        vowel_epenthesis.get("skipAll")
+        or (
+            vowel_epenthesis.get("skipLast")
+            and is_last_syllable
+        )
+    )
+
+
+def _build_vie_syllable(
+    syllable: dict,
+    rules: ConversionRules,
+) -> tuple[str, bool]:
+    head = syllable["parts"][0] or ""
+    tail = syllable["parts"][1] or ""
+    is_null_vowel = tail not in rules.ENDING_VOWEL_MAPPING
+
+    vie = (
+        rules.LETTER_MAPPING.get(head, "")
+        + rules.ENDING_VOWEL_MAPPING.get(
+            tail,
+            rules.NULL_MAPPING,
+        )
+    )
+
+    return _replace_vie_syllable_patterns(vie), is_null_vowel
+
+
 def syllable_to_vie(
     syllable: dict,
     options: dict | None = None,
     is_last_syllable: bool = False,
-    mode: RuleMode = "strong",
+    *,
+    mode: RuleMode,
 ) -> str:
     options = options or {}
     rules = _rules_for_mode(mode)
 
-    head = syllable["parts"][0] or ""
-    tail = syllable["parts"][1] or ""
-
-    is_null_vowel = tail not in rules.ENDING_VOWEL_MAPPING
-
-    vie_syllable = (
-        rules.LETTER_MAPPING.get(head, "")
-        + rules.ENDING_VOWEL_MAPPING.get(tail, rules.NULL_MAPPING)
-    )
-
-    # Equivalent to JS:
-    #
-    # .replace(/wi|wa|wâ|we|wơ|ge|gi(?!a)|gê|qui/g, callback)
-    #
-    replacements = {
-        "wi": "uy",
-        "wa": "oa",
-        "wâ": "uâ",
-        "we": "oe",
-        "wơ": "uơ",
-        "ge": "ghe",
-        "gi": "ghi",
-        "gê": "ghê",
-        "qui": "quy",
-    }
-
-    pattern = re.compile(r"wi|wa|wâ|we|wơ|ge|gi(?!a)|gê|qui")
-
-    vie_syllable = pattern.sub(
-        lambda match: replacements[match.group(0)],
-        vie_syllable,
+    vie_syllable, is_null_vowel = _build_vie_syllable(
+        syllable,
+        rules,
     )
 
     if is_null_vowel:
-        vowel_epenthesis = options.get("vowelEpenthesis", {})
+        if mode == "strong":
+            if _should_skip_vowel_epenthesis(
+                options,
+                is_last_syllable,
+            ):
+                return ""
 
-        if (
-            vowel_epenthesis.get("skipAll")
-            or (
-                vowel_epenthesis.get("skipLast")
-                and is_last_syllable
+            vie_syllable = _apply_vowel_epenthesis(
+                vie_syllable,
+                options,
             )
-        ):
-            return ""
-
-        # JS: /._/g
-        #
-        # Replace every two-character sequence where second char = "_".
-        def replace_epenthesis(match: re.Match) -> str:
-            consonant = match.group(0)[0]
-            replacement = vowel_epenthesis.get(
-                "replacement",
-                "ơ",
+        else:
+            vie_syllable = vie_syllable.replace(
+                rules.NULL_MAPPING,
+                "",
             )
-            return vie_consonant_rule(
-                consonant,
-                replacement,
-            )
-
-        vie_syllable = re.sub(
-            r"._",
-            replace_epenthesis,
-            vie_syllable,
-        )
-
     else:
-        # JS:
-        # /ki$|li$|mi$|si$|ti$|hi$/g
-        ending_replacements = {
-            "ki": "ky",
-            "li": "ly",
-            "mi": "my",
-            "si": "sy",
-            "ti": "ty",
-            "hi": "hy",
-        }
-
-        vie_syllable = re.sub(
-            r"ki$|li$|mi$|si$|ti$|hi$",
-            lambda match: ending_replacements[match.group(0)],
+        vie_syllable = _apply_ending_replacements(
+            vie_syllable,
+        )
+        vie_syllable = _apply_initial_consonant_rule(
             vie_syllable,
         )
 
-        # JS:
-        # /^k.|^c./g
-        #
-        # This matches first two characters.
-        vie_syllable = re.sub(
-            r"^[kc].",
-            lambda match: vie_consonant_rule(
-                match.group(0)[0],
-                match.group(0)[1],
-            ),
+    if mode == "strong":
+        vie_syllable = add_tonal_mark(
             vie_syllable,
+            syllable.get("stress"),
         )
 
-    syl_with_tonal = add_tonal_mark(
-        vie_syllable,
-        syllable.get("stress"),
+        if options.get("uppercaseStress") and syllable.get("stress"):
+            return vie_syllable.upper()
+
+    return vie_syllable
+
+
+def _clean_ipa_item(item: str) -> str:
+    return (
+        item
+        .replace("ɝˈ", "əˈɹ")
+        .replace("ɝ", "əɹ")
     )
 
-    if options.get("uppercaseStress") and syllable.get("stress"):
-        return syl_with_tonal.upper()
 
-    return syl_with_tonal
+def _normalize_stress(ast: list[dict]) -> None:
+    stress_count = sum(
+        1 for syllable in ast
+        if syllable.get("stress")
+    )
+
+    vowel_count = sum(
+        1 for syllable in ast
+        if syllable["parts"][1]
+    )
+
+    if stress_count != vowel_count:
+        return
+
+    secondary = next(
+        (
+            syllable
+            for syllable in ast
+            if syllable.get("stress") == 2
+        ),
+        None,
+    )
+
+    if secondary:
+        secondary["stress"] = None
+
+
+def _move_stress_from_empty_syllables(ast: list[dict]) -> None:
+    for idx, syllable in enumerate(ast):
+        if (
+            syllable.get("stress")
+            and not syllable["parts"][1]
+            and idx + 1 < len(ast)
+        ):
+            ast[idx + 1]["stress"] = syllable["stress"]
+            syllable["stress"] = None
+
+
+def _convert_ast_to_vie(
+    ast: list[dict],
+    options: dict,
+    mode: RuleMode,
+) -> str:
+    last_syllable_idx = len(ast) - 1
+    vie_parts = []
+
+    for idx, syllable in enumerate(ast):
+        vie_syl = syllable_to_vie(
+            syllable=syllable,
+            options=options,
+            is_last_syllable=(
+                idx == last_syllable_idx
+            ),
+            mode=mode,
+        )
+
+        if idx != 0 and vie_syl:
+            vie_parts.append("-")
+
+        vie_parts.append(vie_syl)
+
+    return "".join(vie_parts)
+
+
+def _convert_ipa_item(
+    item: str,
+    options: dict,
+    mode: RuleMode,
+) -> dict:
+    cleaned = _clean_ipa_item(item)
+    ast = parse(cleaned)
+
+    _normalize_stress(ast)
+    _move_stress_from_empty_syllables(ast)
+
+    return {
+        "ipa": item,
+        "ast": ast,
+        "vie": _convert_ast_to_vie(
+            ast,
+            options,
+            mode,
+        ),
+    }
 
 
 def ipa_to_vie(
     ipa: str,
     options: dict | None = None,
-    mode: RuleMode = "strong",
+    *,
+    mode: RuleMode,
 ) -> list[dict]:
     options = options or {}
     _rules_for_mode(mode)
+
     results = []
 
     for item in ipa.split(", "):
-        cleaned = (
-            item
-            .replace("ɝˈ", "əˈɹ")
-            .replace("ɝ", "əɹ")
-        )
-
         try:
-            ast = parse(cleaned)
-
-            # JS:
-            #
-            # ast.reduce((s, p) => s + (p.stress ? 1 : 0), 0)
-            #
-            # ==
-            #
-            # ast.reduce((s, p) => s + (p.parts[1] ? 1 : 0), 0)
-            stress_count = sum(
-                1 for syllable in ast
-                if syllable.get("stress")
-            )
-
-            vowel_count = sum(
-                1 for syllable in ast
-                if syllable["parts"][1]
-            )
-
-            if stress_count == vowel_count:
-                secondary = next(
-                    (
-                        syllable
-                        for syllable in ast
-                        if syllable.get("stress") == 2
-                    ),
-                    None,
+            results.append(
+                _convert_ipa_item(
+                    item,
+                    options,
+                    mode,
                 )
-
-                if secondary:
-                    secondary["stress"] = None
-
-            last_syllable_idx = len(ast) - 1
-            vie_parts = []
-
-            for idx, syllable in enumerate(ast):
-                # JS:
-                #
-                # if (
-                #   syllable.stress &&
-                #   !syllable.parts[1] &&
-                #   !!ast[idx + 1]
-                # )
-                #
-                if (
-                    syllable.get("stress")
-                    and not syllable["parts"][1]
-                    and idx + 1 < len(ast)
-                ):
-                    ast[idx + 1]["stress"] = syllable["stress"]
-                    syllable["stress"] = None
-
-                vie_syl = syllable_to_vie(
-                    syllable=syllable,
-                    options=options,
-                    is_last_syllable=(
-                        idx == last_syllable_idx
-                    ),
-                    mode=mode,
-                )
-
-                if idx != 0 and vie_syl:
-                    vie_parts.append("-")
-
-                vie_parts.append(vie_syl)
-
-            results.append({
-                "ipa": item,
-                "ast": ast,
-                "vie": "".join(vie_parts),
-            })
-
+            )
         except Exception as e:
             print(
                 e,
                 "-------------",
-                [ipa, item, cleaned],
+                [ipa, item, _clean_ipa_item(item)],
             )
 
     return results

@@ -46,7 +46,7 @@ def normalize_phonemized_ipa(ipa: str) -> str:
 def text_to_vietify(
     text: str,
     language: str,
-    mode: Literal["weak", "strong"] = "strong",
+    mode: Literal["weak", "strong"] ,
 ) -> str:
     if language == "ipa":
         ipa = text
@@ -110,7 +110,7 @@ def main() -> int:
         "--mode",
         choices=("weak", "strong"),
         default="weak",
-        help="Conversion rule mode: weak or strong. Default: strong.",
+        help="Conversion rule mode: weak or strong. Default: weak.",
     )
     args = parser.parse_args()
 

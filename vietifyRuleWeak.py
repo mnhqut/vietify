@@ -83,21 +83,34 @@ ENDING_VOWEL_MAPPING: dict[str, str] = {
     "ɛb": "eb",
     "ɛɡ": "eg",
 
-    "j": "j",
-    "jaʊ": "jau",
-    "jeɪ": "jây",
-    "ji": "ji",
-    "joʊ": "jau",
-    "ju": "ju",
-    "jæ": "ye",
-    "jɑ": "ya",
-    "jɔ": "yo",
-    "jə": "jơ",
-    "jɛ": "je",
-    "jɪ": "y",
+    # "j": "j",
+    # "jaʊ": "jau",
+    # "jeɪ": "jây",
+    # "ji": "ji",
+    # "joʊ": "jau",
+    # "ju": "ju",
+    # "jæ": "ye",
+    # "jɑ": "ya",
+    # "jɔ": "yo",
+    # "jə": "jơ",
+    # "jɛ": "je",
+    # "jɪ": "y",
+    # "jʊ": "iu",
+    # "jəŋ": "giâng",
+    "j": "i",
+    "jaʊ": "iau",
+    "jeɪ": "iây",
+    "ji": "i",
+    "joʊ": "iau",
+    "ju": "iu",
+    "jæ": "iae",
+    "jɑ": "ia",
+    "jɔ": "io",
+    "jə": "ia",
+    "jɛ": "iê",
+    "jɪ": "i",
     "jʊ": "iu",
-    "jəŋ": "giâng",
-
+    "jəŋ": "iêng",
 
     "æ": "ae",
     "æb": "aep",
@@ -178,7 +191,7 @@ LETTER_MAPPING: dict[str, str] = {
     "v": "v",
     "w": "w",
     "ŋ": "ng",
-    "t": "th",  ##
+    "t": "t",  ## should set up rule when t is aspirated and when not
     "ɔ": "o",
     "ə": "ơ",
     "ɛ": "ê",
@@ -188,8 +201,8 @@ LETTER_MAPPING: dict[str, str] = {
 
     "z": "z",
     # not exact equivalence in vietnamese 
-    "dʒ": "gi",
-    "ʒ": "gi",  ##
+    "dʒ": "dʒ",
+    "ʒ": "ʒ",  ##gi
     "j": "j",
  
     "æ": "ae",
