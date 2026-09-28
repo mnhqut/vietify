@@ -1,3 +1,4 @@
+import logging
 import re
 import unicodedata
 from typing import Literal, Protocol
@@ -10,11 +11,15 @@ from .vietifyRuleStrong import (
 )
 from .parser import parse
 
+logger = logging.getLogger(__name__)
+
 RuleMode = Literal["weak", "strong"]
 
 
 class ConversionRules(Protocol):
-    ENDING_VOWEL_MAPPING: dict[str, str]
+    """Rule table required by syllable-to-Vie conversion."""
+
+    SYLLABLE_ENDING_MAPPING: dict[str, str]
     LETTER_MAPPING: dict[str, str]
     NULL_MAPPING: Literal["_"]
 
@@ -26,6 +31,7 @@ _RULES: dict[RuleMode, ConversionRules] = {
 
 
 def _rules_for_mode(mode: RuleMode) -> ConversionRules:
+    """Return rule table for mode, raising ValueError for unsupported modes."""
     try:
         return _RULES[mode]
     except KeyError:
@@ -35,14 +41,17 @@ def _rules_for_mode(mode: RuleMode) -> ConversionRules:
 
 
 def normalize_nfc(value: str) -> str:
+    """Normalize Unicode to NFC so composed Vietnamese characters compare consistently."""
     return unicodedata.normalize("NFC", value)
 
 
 def normalize_nfd(value: str) -> str:
+    """Normalize Unicode to NFD for inspecting a base character."""
     return unicodedata.normalize("NFD", value)
 
 
 def add_tonal_mark_to_vowel(vie: str, tonal_mark: str) -> str:
+    """Attach tonal mark to preferred Vietnamese vowel, falling back by priority."""
     # Prefer ê, â, ă, ô, ơ, ư
     match = re.search(r"[êâăôơư]", vie, re.IGNORECASE)
 
@@ -83,6 +92,7 @@ def add_tonal_mark_to_vowel(vie: str, tonal_mark: str) -> str:
 
 
 def add_tonal_mark(vie: str, is_stress: int | None = None) -> str:
+    """Apply Vietnamese tone mark based on syllable ending and stress."""
     if re.search(r"(ch|t|p|c)$", vie):
         return add_tonal_mark_to_vowel(
             vie,
@@ -96,6 +106,7 @@ def add_tonal_mark(vie: str, is_stress: int | None = None) -> str:
 
 
 def vie_consonant_rule(consonant: str, vowel: str) -> str:
+    """Resolve c/k alternation required by following vowel."""
     if (
         vowel
         and consonant == "k"
@@ -145,6 +156,7 @@ _ENDING_PATTERN = re.compile(
 
 
 def _replace_vie_syllable_patterns(vie: str) -> str:
+    """Apply spelling substitutions that operate on complete Vie syllables."""
     return _VIE_SYLLABLE_PATTERN.sub(
         lambda match: _VIE_SYLLABLE_REPLACEMENTS[match.group(0)],
         vie,
@@ -155,6 +167,7 @@ def _apply_vowel_epenthesis(
     vie: str,
     options: dict,
 ) -> str:
+    """Insert configured vowel into syllables whose vowel is missing."""
     vowel_epenthesis = options.get("vowelEpenthesis", {})
 
     def replace_epenthesis(match: re.Match) -> str:
@@ -176,6 +189,7 @@ def _apply_vowel_epenthesis(
 
 
 def _apply_ending_replacements(vie: str) -> str:
+    """Apply final -i -> -y spelling substitutions."""
     return _ENDING_PATTERN.sub(
         lambda match: _ENDING_REPLACEMENTS[match.group(0)],
         vie,
@@ -183,6 +197,7 @@ def _apply_ending_replacements(vie: str) -> str:
 
 
 def _apply_initial_consonant_rule(vie: str) -> str:
+    """Apply c/k spelling rule to initial consonant."""
     return re.sub(
         r"^[kc].",
         lambda match: vie_consonant_rule(
@@ -197,6 +212,7 @@ def _should_skip_vowel_epenthesis(
     options: dict,
     is_last_syllable: bool,
 ) -> bool:
+    """Return whether vowel epenthesis should be skipped for current syllable."""
     vowel_epenthesis = options.get("vowelEpenthesis", {})
 
     return (
@@ -212,13 +228,22 @@ def _build_vie_syllable(
     syllable: dict,
     rules: ConversionRules,
 ) -> tuple[str, bool]:
-    head = syllable["parts"][0] or ""
-    tail = syllable["parts"][1] or ""
-    is_null_vowel = tail not in rules.ENDING_VOWEL_MAPPING
+    """Map parser AST syllable components into an intermediate Vie syllable.
+
+    Returns:
+        (syllable, is_null_vowel)
+    """
+    head = syllable.get("initial") or ""
+    nucleus = syllable.get("nucleus") or ""
+    ending = syllable.get("ending") or ""
+
+    tail = nucleus + ending
+
+    is_null_vowel = tail not in rules.SYLLABLE_ENDING_MAPPING
 
     vie = (
         rules.LETTER_MAPPING.get(head, "")
-        + rules.ENDING_VOWEL_MAPPING.get(
+        + rules.SYLLABLE_ENDING_MAPPING.get(
             tail,
             rules.NULL_MAPPING,
         )
@@ -234,6 +259,11 @@ def syllable_to_vie(
     *,
     mode: RuleMode,
 ) -> str:
+    """Convert one parser AST syllable into Vie spelling.
+
+    Strong mode preserves additional information such as stress and can
+    insert epenthetic vowels. Weak mode removes null-vowel placeholders.
+    """
     options = options or {}
     rules = _rules_for_mode(mode)
 
@@ -280,6 +310,7 @@ def syllable_to_vie(
 
 
 def _clean_ipa_item(item: str) -> str:
+    """Normalize IPA variants that parser does not consume directly."""
     return (
         item
         .replace("ɝˈ", "əˈɹ")
@@ -288,6 +319,7 @@ def _clean_ipa_item(item: str) -> str:
 
 
 def _normalize_stress(ast: list[dict]) -> None:
+    """Remove secondary stress when every vowel already has stress."""
     stress_count = sum(
         1 for syllable in ast
         if syllable.get("stress")
@@ -295,7 +327,7 @@ def _normalize_stress(ast: list[dict]) -> None:
 
     vowel_count = sum(
         1 for syllable in ast
-        if syllable["parts"][1]
+        if syllable.get("nucleus")
     )
 
     if stress_count != vowel_count:
@@ -314,11 +346,14 @@ def _normalize_stress(ast: list[dict]) -> None:
         secondary["stress"] = None
 
 
-def _move_stress_from_empty_syllables(ast: list[dict]) -> None:
+def _move_stress_from_empty_syllables(
+    ast: list[dict],
+) -> None:
+    """Move stress from syllable without nucleus onto following syllable."""
     for idx, syllable in enumerate(ast):
         if (
             syllable.get("stress")
-            and not syllable["parts"][1]
+            and not syllable.get("nucleus")
             and idx + 1 < len(ast)
         ):
             ast[idx + 1]["stress"] = syllable["stress"]
@@ -330,6 +365,7 @@ def _convert_ast_to_vie(
     options: dict,
     mode: RuleMode,
 ) -> str:
+    """Convert parsed IPA AST into hyphen-separated Vie syllables."""
     last_syllable_idx = len(ast) - 1
     vie_parts = []
 
@@ -356,20 +392,49 @@ def _convert_ipa_item(
     options: dict,
     mode: RuleMode,
 ) -> dict:
+    """Parse and convert one IPA item.
+
+    Kept separate from `ipa_to_vie` so failures can be traced to one
+    IPA item without losing surrounding input context.
+    """
     cleaned = _clean_ipa_item(item)
+
+    logger.debug(
+        "IPA conversion start: item=%r cleaned=%r mode=%s options=%r",
+        item,
+        cleaned,
+        mode,
+        options,
+    )
+
     ast = parse(cleaned)
+
+    logger.debug(
+        "IPA parsed: item=%r ast=%r",
+        item,
+        ast,
+    )
 
     _normalize_stress(ast)
     _move_stress_from_empty_syllables(ast)
 
+    vie = _convert_ast_to_vie(
+        ast,
+        options,
+        mode,
+    )
+
+    logger.debug(
+        "IPA conversion complete: item=%r vie=%r ast=%r",
+        item,
+        vie,
+        ast,
+    )
+
     return {
         "ipa": item,
         "ast": ast,
-        "vie": _convert_ast_to_vie(
-            ast,
-            options,
-            mode,
-        ),
+        "vie": vie,
     }
 
 
@@ -379,12 +444,25 @@ def ipa_to_vie(
     *,
     mode: RuleMode,
 ) -> list[dict]:
+    """Convert comma-separated IPA items into Vie representations.
+
+    Each result contains original IPA, parsed AST, and converted Vie text.
+    Exceptions retain their original traceback while logging enough context
+    to identify failing input and conversion mode.
+    """
     options = options or {}
     _rules_for_mode(mode)
 
     results = []
 
-    for item in ipa.split(", "):
+    logger.debug(
+        "IPA batch conversion start: ipa=%r mode=%s options=%r",
+        ipa,
+        mode,
+        options,
+    )
+
+    for index, item in enumerate(ipa.split(", ")):
         try:
             results.append(
                 _convert_ipa_item(
@@ -393,11 +471,22 @@ def ipa_to_vie(
                     mode,
                 )
             )
-        except Exception as e:
-            print(
-                e,
-                "-------------",
-                [ipa, item, _clean_ipa_item(item)],
+        except Exception:
+            logger.exception(
+                "IPA conversion failed: "
+                "index=%d item=%r cleaned=%r mode=%s options=%r",
+                index,
+                item,
+                _clean_ipa_item(item),
+                mode,
+                options,
             )
+            raise
+
+    logger.debug(
+        "IPA batch conversion complete: count=%d mode=%s",
+        len(results),
+        mode,
+    )
 
     return results

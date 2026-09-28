@@ -42,7 +42,7 @@ def normalize_phonemized_ipa(
         .replace("ɾ", "r")
         .replace("ɥ", "w")
         .replace("ʌ", "ɑ")
-        
+
     )
 
 OutputMode = Literal["weak", "strong", "ipa"]
@@ -96,7 +96,7 @@ def text_to_vietify(
 
         if not results:
             raise ValueError(
-                f"could not parse IPA text: {pronunciation!r}"
+                f"could not convert IPA text: {pronunciation!r}"
             )
 
         converted_words.append(

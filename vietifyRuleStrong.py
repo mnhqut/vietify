@@ -5,7 +5,7 @@ COMBINE_GRAVE = "\u0300"
 NULL_MAPPING = "_"
 
 
-ENDING_VOWEL_MAPPING: dict[str, str] = {
+SYLLABLE_ENDING_MAPPING: dict[str, str] = {
     "a": "a",
     "aɪ": "ai",
     "aʊ": "ao",

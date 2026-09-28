@@ -1,33 +1,46 @@
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import NodeVisitor
+import unicodedata
 
 
 grammar = Grammar(r"""
 Word = ws "/"? Syllable* "/"? ws
 ws = " "*
 
-Syllable =
-      Stress? Consonant Stress? SyllableEnding
-    / Stress? Consonant
-    / Stress? SyllableEnding
 
-# SyllableEnding =
-#     ((((DiphthongEnding / Diphthong) !(Diphthong / Vowel))
-#     / (Vowel EndingConsonant) !(Diphthong / Vowel))
-#     / Vowel)
+Syllable =
+      SyllableWithEnding
+    / SyllableWithConsonant
+    / SyllableBare
+
+SyllableWithEnding =
+    Stress? Consonant Stress? SyllableEnding
+
+SyllableWithConsonant =
+    Stress? Consonant
+
+SyllableBare =
+    Stress? SyllableEnding
 
 SyllableEnding =
-    ((((DiphthongEnding / FrenchNasalDiphthong / Diphthong)
-        !(Diphthong / Vowel))
-    / (Vowel EndingConsonant) !(Diphthong / Vowel))
-    / Vowel)
+      DiphthongWithEnding
+    / VowelWithEnding
+    / BareDiphthong
+    / BareVowel
+    
+DiphthongWithEnding = (Diphthong) (EndingConsonant / ApprxEndingConsonant) !(Diphthong / Vowel) 
+VowelWithEnding = Vowel (EndingConsonant / ApprxEndingConsonant) !(Diphthong / Vowel) 
+BareDiphthong =
+    Diphthong !Vowel
+
+BareVowel =
+    Vowel
 
 Consonant =
       "b"
     / "tʃ"
     / "tɹ"
     / "t"
-    /     "k" Stress? "w"
     / "k"
     / "z"
     / "ɹ"
@@ -38,6 +51,7 @@ Consonant =
     / "n"
     / "ɫ"
     / "l"
+    / "j"
     / "w"
     / "p"
     / "θ"
@@ -55,57 +69,27 @@ Consonant =
     / "ʁ"
 
 EndingConsonant =
-      "b"
-    / "t" !"ʃ"
+# very specific for vietnamese
+     "t" !"ʃ"
     / "k" !(Stress? "w")
-    / "m"
-    / "ɡ"
-    / "n"
     / "p"
-    / "h"
+
+    / "m"
+    / "n"
     / "ŋ"
+
+ApprxEndingConsonant = 
+# i purposefully only choose stop consonants and l here
+     "b"
+    / "g"
+    / "v"
+    / "l"
+    / "ɫ"
 
     # french 
     # / "ɲ"   # complicated to treat this as ending consonant
     / "ʁ"
 
-DiphthongEnding =
-      "eɪt"
-    / "jəŋ"
-    / "eɪn"
-
-Diphthong =
-      "oʊ"
-    / "eɪ"
-    / "aɪ"
-    / "aʊ"
-    / "ju"
-    / "jə"
-    / "jæ"
-    / "jɑ"
-    / "jʊ"
-    / "jɛ"
-    / "jɪ"
-    / "jɔ"
-    / "ji"
-    / "joʊ"
-    / "jaʊ"
-    / "jeɪ"
-    / "əj"
-    / "ɔɪ"
-
-    / "wa"
-
-    #fr
-    # / "jɑ̃"
-    # / "jɛ̃"
-    # / "jɔ̃"
-    # / "jœ̃"
-FrenchNasalDiphthong =
-      "jɑ̃"
-    / "jɛ̃"
-    / "jɔ̃"
-    / "jœ̃"
 
 Vowel =
     #fr
@@ -130,11 +114,37 @@ Vowel =
     / "ɑ"
     / "ɝ"
     / "æ"
-    / "j"
+
 
 Stress =
       "ˈ"
     / "ˌ"
+
+
+# DiphthongEnding =
+#       "eɪt"
+#     / "jəŋ"
+#     / "eɪn"
+
+Glide =
+    "j"
+    / "w"
+
+TrueDiphthong =
+      "oʊ"
+    / "eɪ"
+    / "aɪ"
+    / "ɑɪ"
+    / "aʊ"
+    / "əj"
+    / "ɔɪ"
+    / "wa"
+
+Diphthong = 
+    Glide TrueDiphthong
+    / TrueDiphthong
+
+
 """)
 
 
@@ -150,67 +160,119 @@ def remove_stress(text):
     return text.replace("ˈ", "").replace("ˌ", "")
 
 
+
 class Visitor(NodeVisitor):
+    """Transform parsed pronunciation grammar nodes into structured data."""
 
     def visit_Word(self, node, children):
+        """Return word syllables as a normalized list."""
         _, _, syllables, _, _ = children
         return syllables if isinstance(syllables, list) else [syllables]
 
     def visit_Syllable(self, node, children):
-        # Optional expressions that do not match are omitted from
-        # ``children`` by parsimonious, so inspect the named grammar nodes
-        # instead of relying on positional indexes.
-        sequence = node.children[0].children
-        stress = next(
-            (c for c in node.text if c in "ˈˌ"),
-            None,
-        )
-        consonant = next(
-            (
-                child.text
-                for child in sequence
-                if child.expr_name == "Consonant"
-            ),
-            None,
-        )
-        ending = next(
-            (
-                child.text
-                for child in sequence
-                if child.expr_name == "SyllableEnding"
-            ),
-            None,
-        )
+        return children[0]
 
-        if consonant is not None and stress is None:
-            stress = next(
-                (c for c in consonant if c in "ˈˌ"),
-                None,
-            )
+
+    def visit_SyllableWithEnding(self, node, children):
+        stress1, consonant, stress2, ending = children
+
+        stress = stress1 or stress2
 
         return {
             "stress": stress_value(stress),
-            "parts": [
-                remove_stress(consonant) if consonant else None,
-                remove_stress(ending) if ending else None,
-            ],
+            "initial": remove_stress(consonant) if consonant else None,
+            "nucleus": ending["nucleus"],
+            "ending": ending["ending"],
         }
 
-    # def visit_SyllableEnding(self, node, children):
-    #     return node.text
-    def visit_VowelWithEnding(self, node, children):
-        vowel, ending = children
+
+    def visit_SyllableWithConsonant(self, node, children):
+        stress, consonant = children
+
         return {
-            "vowel": vowel,
+            "stress": stress_value(stress),
+            "initial": remove_stress(consonant) if consonant else None,
+            "nucleus": None,
+            "ending": None,
+        }
+
+
+    def visit_SyllableBare(self, node, children):
+        stress, ending = children
+
+        return {
+            "stress": stress_value(stress),
+            "initial": None,
+            "nucleus": ending["nucleus"],
+            "ending": ending["ending"],
+        }
+    
+    def visit_SyllableEnding(self, node, children):
+        """Return normalized syllable-ending structure."""
+        child = children[0]
+
+        if isinstance(child, dict):
+            return child
+
+        if isinstance(child, str):
+            return {
+                "nucleus": child,
+                "ending": None,
+            }
+
+        raise TypeError(
+            f"Unexpected SyllableEnding child: "
+            f"{type(child).__name__}: {child!r}"
+        )
+
+    def visit_DiphthongWithEnding(self, node, children):
+        nucleus, ending = children[:2]
+        return {
+            "nucleus": nucleus,
             "ending": ending,
         }
-    def visit_SyllableEnding(self, node, children):
-        return children[0]
+
+    def visit_VowelWithEnding(self, node, children):
+        nucleus, ending = children[:2]
+        return {
+            "nucleus": nucleus,
+            "ending": ending,
+        }
     
+    def visit_BareDiphthong(self, node, children):
+        return {
+            "nucleus": children[0],
+            "ending": None,
+        }
+
+
+    def visit_BareVowel(self, node, children):
+        return {
+            "nucleus": children[0],
+            "ending": None,
+        }
+    
+    def visit_Vowel(self, node, children):
+        """Return vowel text."""
+        return node.text
+
+    def visit_Diphthong(self, node, children):
+        """Return diphthong text."""
+        return node.text
+    
+    def visit_Glide(self, node, children):
+        """Return glide text."""
+        return node.text
+
+
+    def visit_TrueDiphthong(self, node, children):
+        """Return true diphthong text."""
+        return node.text
+
     def visit_Consonant(self, node, children):
+        """Return initial consonant, normalizing ``kw`` stress placement."""
         text = node.text
 
-        # "k" stress? "w" -> "kw", "kˈw", or "kˌw"
         if text.startswith("k") and text.endswith("w"):
             stress = next(
                 (c for c in text if c in "ˈˌ"),
@@ -221,29 +283,32 @@ class Visitor(NodeVisitor):
         return text
 
     def visit_EndingConsonant(self, node, children):
+        """Return final consonant text."""
         return node.text
 
     def visit_DiphthongEnding(self, node, children):
-        return node.text
-
-    def visit_Diphthong(self, node, children):
-        return node.text
-
-    def visit_Vowel(self, node, children):
+        """Return diphthong ending text."""
         return node.text
 
     def visit_Stress(self, node, children):
+        """Return stress marker text."""
         return node.text
 
     def visit_ws(self, node, children):
+        """Return whitespace text."""
         return node.text
 
     def generic_visit(self, node, children):
+        """Collapse single-child nodes and preserve multi-child results."""
         if children:
             return children[0] if len(children) == 1 else children
         return node.text
 
+    def visit_ApprxEndingConsonant(self, node, children):
+        return node.text
 
 def parse(text):
+    """Parse pronunciation text and return its structured representation."""
+    text = unicodedata.normalize("NFC", text)
     tree = grammar.parse(text)
     return Visitor().visit(tree)
