@@ -24,29 +24,33 @@ PHONEMIZER_LANGUAGES = {
 }
 
 
-def normalize_phonemized_ipa(ipa: str) -> str:
+def normalize_phonemized_ipa(
+    ipa: str,
+    *,
+    preserve_nasalization: bool = False,
+) -> str:
+    normalized = ipa.replace("ː", "")
+    if not preserve_nasalization:
+        normalized = normalized.replace("̃", "")
+
     return (
-        ipa.replace("ː", "")
-        .replace("̃", "")
+        normalized
         .replace("ɚ", "əɹ")
-        # .replace("ɝ", "əɹ")
         .replace("ɜ", "ə")
         .replace("ɐ", "ə")
         .replace("ᵻ", "ɪ")
         .replace("ɾ", "r")
-        # .replace("ʁ", "r")
-        # .replace("ɲ", "n")
         .replace("ɥ", "w")
-        # .replace("r", "ɹ")
-        # .replace("l", "ɫ")
         .replace("ʌ", "ɑ")
+        
     )
 
+OutputMode = Literal["weak", "strong", "ipa"]
 
 def text_to_vietify(
     text: str,
     language: str,
-    mode: Literal["weak", "strong"] ,
+    mode: OutputMode,
 ) -> str:
     if language == "ipa":
         ipa = text
@@ -61,19 +65,39 @@ def text_to_vietify(
                 preserve_punctuation=True,
             ),
         )
-    ipa = normalize_phonemized_ipa(ipa)
+
+    ipa = normalize_phonemized_ipa(
+        ipa,
+        preserve_nasalization=language == "fr",
+    )
+
+    if mode == "ipa":
+        return ipa
+
     converted_words = []
 
     for word in ipa.split():
-        match = re.match(r"^([^\w]*)(.*?)([^\w]*)$", word, re.UNICODE)
+        match = re.match(
+            r"^([^\w\u0300-\u036f]*)(.*?)([^\w\u0300-\u036f]*)$",
+            word,
+            re.UNICODE,
+        )
+
         if not match or not match.group(2):
             converted_words.append(word)
             continue
 
         leading, pronunciation, trailing = match.groups()
-        results = ipa_to_vie(pronunciation, mode=mode)
+
+        results = ipa_to_vie(
+            pronunciation,
+            mode=mode,
+        )
+
         if not results:
-            raise ValueError(f"could not parse IPA text: {pronunciation!r}")
+            raise ValueError(
+                f"could not parse IPA text: {pronunciation!r}"
+            )
 
         converted_words.append(
             leading
@@ -82,7 +106,6 @@ def text_to_vietify(
         )
 
     return " ".join(converted_words)
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -108,9 +131,13 @@ def main() -> int:
     parser.add_argument(
         "-m",
         "--mode",
-        choices=("weak", "strong"),
+        choices=("weak", "strong", "ipa"),
         default="weak",
-        help="Conversion rule mode: weak or strong. Default: weak.",
+        help=(
+            "Output mode: weak, strong, or ipa. "
+            "ipa only phonemizes input without Vietify conversion. "
+            "Default: weak."
+        ),
     )
     args = parser.parse_args()
 

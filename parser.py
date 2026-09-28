@@ -11,9 +11,15 @@ Syllable =
     / Stress? Consonant
     / Stress? SyllableEnding
 
+# SyllableEnding =
+#     ((((DiphthongEnding / Diphthong) !(Diphthong / Vowel))
+#     / (Vowel EndingConsonant) !(Diphthong / Vowel))
+#     / Vowel)
+
 SyllableEnding =
-    ((((Vowel EndingConsonant) / DiphthongEnding) !(Diphthong / Vowel))
-    / Diphthong
+    ((((DiphthongEnding / FrenchNasalDiphthong / Diphthong)
+        !(Diphthong / Vowel))
+    / (Vowel EndingConsonant) !(Diphthong / Vowel))
     / Vowel)
 
 Consonant =
@@ -44,18 +50,24 @@ Consonant =
     / "d"
     / "ð"
 
+    # french 
+    / "ɲ"
+    / "ʁ"
+
 EndingConsonant =
       "b"
     / "t" !"ʃ"
     / "k" !(Stress? "w")
     / "m"
     / "ɡ"
-    / "ɛ"
     / "n"
-    / "e"
     / "p"
     / "h"
     / "ŋ"
+
+    # french 
+    # / "ɲ"   # complicated to treat this as ending consonant
+    / "ʁ"
 
 DiphthongEnding =
       "eɪt"
@@ -82,8 +94,30 @@ Diphthong =
     / "əj"
     / "ɔɪ"
 
+    / "wa"
+
+    #fr
+    # / "jɑ̃"
+    # / "jɛ̃"
+    # / "jɔ̃"
+    # / "jœ̃"
+FrenchNasalDiphthong =
+      "jɑ̃"
+    / "jɛ̃"
+    / "jɔ̃"
+    / "jœ̃"
+
 Vowel =
-      "a"
+    #fr
+      "ɑ̃"
+    / "ɛ̃"
+    / "ɔ̃"
+    / "œ̃"
+    / "ø"
+    / "œ"
+    / "y"
+    ##
+    / "a"
     / "ʊ"
     / "ə"
     / "ɔ"
@@ -162,9 +196,17 @@ class Visitor(NodeVisitor):
             ],
         }
 
+    # def visit_SyllableEnding(self, node, children):
+    #     return node.text
+    def visit_VowelWithEnding(self, node, children):
+        vowel, ending = children
+        return {
+            "vowel": vowel,
+            "ending": ending,
+        }
     def visit_SyllableEnding(self, node, children):
-        return node.text
-
+        return children[0]
+    
     def visit_Consonant(self, node, children):
         text = node.text
 

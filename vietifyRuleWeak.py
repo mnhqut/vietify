@@ -8,10 +8,20 @@ NULL_MAPPING = "_"
 ENDING_VOWEL_MAPPING: dict[str, str] = {
     # exact 1-1 correspondant
     "a": "a",
+    "at": "at",
+
     "aɪ": "ai",
     "ɑŋ": "ang",
 
-    "e": "e",
+    "e": "ê",
+    "eb": "êb",
+    "ek": "êc",
+    "em": "êm",
+    "en": "ên",
+    "ep": "êp",
+    "et": "êt",
+    "eŋ": "êng",
+    "eɡ": "êg",
     "eɪ": "ây",
 
     "i": "i",
@@ -137,6 +147,7 @@ ENDING_VOWEL_MAPPING: dict[str, str] = {
 
     "eɪt": "âyt",
     "eɪn": "âyn",
+    "wa": "oa",
 
     #very similar to /i/ and /u/ just mostly length, slightly less forward/backward
     "ɪ": "i",
@@ -161,6 +172,60 @@ ENDING_VOWEL_MAPPING: dict[str, str] = {
     "ʊt": "ut",
     "ʊŋ": "ung",
     "ʊɡ": "ug",
+
+    "y": "ü",
+    "yb": "üb",
+    "yk": "üc",
+    "ym": "üm",
+    "yn": "ün",
+    "yp": "üp",
+    "yt": "üt",
+    "yŋ": "üng",
+    "yɡ": "üg",
+
+    "ø": "ø",
+    "øb": "øb",
+    "øk": "øc",
+    "øm": "øm",
+    "øn": "øn",
+    "øp": "øp",
+    "øt": "øt",
+    "øŋ": "øng",
+    "øɡ": "øg",
+
+    "œ": "œ",
+    "œb": "œb",
+    "œk": "œc",
+    "œm": "œm",
+    "œn": "œn",
+    "œp": "œp",
+    "œt": "œt",
+    "œŋ": "œng",
+    "œɡ": "œg",
+
+
+    "ɑ̃": "oong",
+    "ɛ̃": "ăng",
+    "ɔ̃": "ông",
+    "œ̃": "ăng",
+
+    "jɑ̃": "ioong",
+    "jɛ̃": "iăng",
+    "jɔ̃": "iông",
+    "jœ̃": "iăng",
+
+    "iʁ": "iʁ",
+    "eʁ": "êʁ",
+    "ɛʁ": "eʁ",
+    "aʁ": "aʁ",
+    "ɑʁ": "aʁ",
+    "oʁ": "ôʁ",
+    "ɔʁ": "oʁ",
+    "uʁ": "uʁ",
+    "yʁ": "üʁ",
+    "øʁ": "øʁ",
+    "œʁ": "œʁ",
+    "əʁ": "ơʁ",
 }
 
 
@@ -205,6 +270,12 @@ LETTER_MAPPING: dict[str, str] = {
     "tɹ": "tr",
 
     "z": "z",
+
+    # french
+    "ɲ": "nh",
+
+
+
     # not exact equivalence in vietnamese 
     "dʒ": "dʒ",
     "ʒ": "ʒ",  ##gi
@@ -214,14 +285,26 @@ LETTER_MAPPING: dict[str, str] = {
     "ɑ": "ä",
     "ɪ": "i",
     "ʊ": "u",
-
     "ɝ": "ơr",
 
     "ɡ": "g",
     "ɫ": "l",
     "ɹ": "r",
     "ʃ": "sh",
-
     "θ": "ss",
     "ð": "zz",
+
+    # french
+    "y": "ü",
+
+    "ɑ̃": "oong",
+    "ɛ̃": "ăng",
+    "ɔ̃": "ông",
+    "œ̃": "ăng",
+
+    "ø": "ø",
+    "œ": "œ",
+
+    "ʁ": "ʁ",
+
 }
