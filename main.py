@@ -10,11 +10,11 @@ from phonemizer import phonemize
 from typing import cast
 
 if __package__:
-    from .converter import ipa_to_vie
+    from .converter import _apply_french_liaison, ipa_to_vie
 else:
     # Allow ``python main.py`` when this file is run from the package folder.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from vietify.converter import ipa_to_vie
+    from vietify.converter import _apply_french_liaison, ipa_to_vie
 
 
 PHONEMIZER_LANGUAGES = {
@@ -84,13 +84,14 @@ def text_to_vietify(
         )
 
         if not match or not match.group(2):
-            converted_words.append(word)
+            converted_words.append({"vie": word})
             continue
 
         leading, pronunciation, trailing = match.groups()
 
         results = ipa_to_vie(
             pronunciation,
+            {"language": language},
             mode=mode,
         )
 
@@ -99,13 +100,18 @@ def text_to_vietify(
                 f"could not convert IPA text: {pronunciation!r}"
             )
 
-        converted_words.append(
-            leading
-            + "-".join(result["vie"] for result in results)
-            + trailing
-        )
+        converted_words.append({
+            "vie": (
+                leading
+                + "-".join(result["vie"] for result in results)
+                + trailing
+            )
+        })
 
-    return " ".join(converted_words)
+    if language == "fr":
+        converted_words = _apply_french_liaison(converted_words)
+
+    return " ".join(word["vie"] for word in converted_words)
 
 def main() -> int:
     parser = argparse.ArgumentParser(

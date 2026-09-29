@@ -83,6 +83,7 @@ ApprxEndingConsonant =
      "b"
     / "g"
     / "v"
+    / "d"
     / "l"
     / "ɫ"
 
@@ -139,9 +140,11 @@ TrueDiphthong =
     / "əj"
     / "ɔɪ"
     / "wa"
+    / "yi"
 
 Diphthong = 
     Glide TrueDiphthong
+    / Glide Vowel
     / TrueDiphthong
 
 

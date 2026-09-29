@@ -105,24 +105,37 @@ def add_tonal_mark(vie: str, is_stress: int | None = None) -> str:
     return vie
 
 
+
 def vie_consonant_rule(consonant: str, vowel: str) -> str:
     """Resolve c/k alternation required by following vowel."""
+
+    # k/c + u + vowel -> qu + vowel
+    if (
+        vowel
+        and consonant in {"k", "c"}
+        and normalize_nfd(vowel[0])[0] == "u"
+        and len(vowel) > 1
+        and normalize_nfd(vowel[1])[0] in {
+            "a", "e", "ê", "i", "o", "u", "œ", "ø", "ä", "ö", "ü", 
+        }
+    ):
+        return "qu" + vowel[1:]
+
     if (
         vowel
         and consonant == "k"
-        and normalize_nfd(vowel[0])[0] in {"a", "o", "u"}
+        and normalize_nfd(vowel[0])[0] in {"a", "o", "u", "ä", "ü",}
     ):
         return "c" + vowel
 
     if (
         vowel
         and consonant == "c"
-        and normalize_nfd(vowel[0])[0] in {"e", "i"}
+        and normalize_nfd(vowel[0])[0] in {"e", "ê", "i", "œ", "ø"}
     ):
         return "k" + vowel
 
     return consonant + vowel
-
 
 _VIE_SYLLABLE_REPLACEMENTS = {
     "wi": "uy",
@@ -195,18 +208,29 @@ def _apply_ending_replacements(vie: str) -> str:
         vie,
     )
 
-
 def _apply_initial_consonant_rule(vie: str) -> str:
     """Apply c/k spelling rule to initial consonant."""
-    return re.sub(
-        r"^[kc].",
-        lambda match: vie_consonant_rule(
-            match.group(0)[0],
-            match.group(0)[1],
-        ),
-        vie,
-    )
 
+    if len(vie) < 2 or vie[0] not in {"k", "c"}:
+        return vie
+
+    return vie_consonant_rule(vie[0], vie[1:])
+
+def _apply_final_k_rule(vie: str) -> str:
+    """Apply Vietnamese c/ch spelling rule to final /k/."""
+
+    if not vie.endswith("c"):
+        return vie
+
+    if len(vie) < 2:
+        return vie
+
+    preceding = normalize_nfd(vie[-2])[0]
+
+    if preceding in {"e", "ê", "i"}:
+        return vie[:-1] + "ch"
+
+    return vie
 
 def _should_skip_vowel_epenthesis(
     options: dict,
@@ -294,6 +318,10 @@ def syllable_to_vie(
             vie_syllable,
         )
         vie_syllable = _apply_initial_consonant_rule(
+            vie_syllable,
+        )
+
+        vie_syllable = _apply_final_k_rule(
             vie_syllable,
         )
 
@@ -437,6 +465,32 @@ def _convert_ipa_item(
         "vie": vie,
     }
 
+_LIAISON_CONSONANTS = {
+    "z", "x",  # z liaison
+    "t", "d",       # t liaison
+    "n",            # n liaison
+    "ph",            # v liaison
+    # "p", "r", 
+}
+_VOWELS = set("aeêiouœøäöü")
+
+def _apply_french_liaison(results: list[dict]) -> list[dict]:
+    """Mark liaison between adjacent converted words."""
+
+    for current, following in zip(results, results[1:]):
+        current_vie = current["vie"]
+        following_vie = following["vie"]
+
+        if (
+            current_vie
+            and following_vie
+            # and current_vie[-1].lower() in _LIAISON_CONSONANTS
+            and any(current_vie.lower().endswith(c) for c in _LIAISON_CONSONANTS)
+            and following_vie[0].lower() in _VOWELS
+        ):
+            current["vie"] = current_vie + " →"
+
+    return results
 
 def ipa_to_vie(
     ipa: str,
@@ -482,6 +536,10 @@ def ipa_to_vie(
                 options,
             )
             raise
+
+    if options.get("language") == "fr":
+        results = _apply_french_liaison(results)
+
 
     logger.debug(
         "IPA batch conversion complete: count=%d mode=%s",

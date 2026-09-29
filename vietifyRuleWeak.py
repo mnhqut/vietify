@@ -7,6 +7,7 @@ NULL_MAPPING = "_"
 
 ENDING_CONSONANT_MAPPING: dict[str, str] = {
     "t": "t",
+    "d": "d",
     "k": "c",
     "p": "p",
     "m": "m",
@@ -41,6 +42,7 @@ NUCLEUS_MAPPING: dict[str, str] = {
 
     # not exact equivalence in vietnamese 
     "aʊ": "ao",
+    "yi": "üi",
 
     # "j": "i",
     "jaʊ": "iau",
