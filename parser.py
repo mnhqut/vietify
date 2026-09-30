@@ -30,6 +30,12 @@ SyllableEnding =
     
 DiphthongWithEnding = (Diphthong) (EndingConsonant / ApprxEndingConsonant) !(Diphthong / Vowel) 
 VowelWithEnding = Vowel (EndingConsonant / ApprxEndingConsonant) !(Diphthong / Vowel) 
+
+Diphthong = 
+    Glide TrueDiphthong
+    / Glide Vowel
+    / TrueDiphthong
+
 BareDiphthong =
     Diphthong !Vowel
 
@@ -40,6 +46,11 @@ Consonant =
       "b"
     / "tʃ"
     / "tɹ"
+
+    # german
+    / "ts"
+    / "pf"
+    
     / "t"
     / "k"
     / "z"
@@ -69,6 +80,12 @@ Consonant =
     / "ɲ"
     / "ʁ"
 
+    # german
+    / "ç"
+    / "x"
+    / "ʔ"
+
+
 EndingConsonant =
 # very specific for vietnamese
      "t" !"ʃ"
@@ -91,7 +108,11 @@ ApprxEndingConsonant =
     # french 
     # / "ɲ"   # complicated to treat this as ending consonant
     / "ʁ"
-
+    
+    #german
+    / "ts"
+    / "pf"
+    / "r"
 
 Vowel =
     #fr
@@ -116,6 +137,10 @@ Vowel =
     / "ɑ"
     / "ɝ"
     / "æ"
+
+    # german
+    / "ɐ"
+    / "ʏ"
 
 
 Stress =
@@ -143,10 +168,9 @@ TrueDiphthong =
     / "wa"
     / "yi"
 
-Diphthong = 
-    Glide TrueDiphthong
-    / Glide Vowel
-    / TrueDiphthong
+    #german
+    / "aɪ"
+    / "ɔʏ"
 
 
 """)

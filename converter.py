@@ -251,6 +251,8 @@ def _should_skip_vowel_epenthesis(
 def _build_vie_syllable(
     syllable: dict,
     rules: ConversionRules,
+    language: str | None = None,
+    has_following_consonant: bool = False,
 ) -> tuple[str, bool]:
     """Map parser AST syllable components into an intermediate Vie syllable.
 
@@ -262,12 +264,22 @@ def _build_vie_syllable(
     ending = syllable.get("ending") or ""
 
     tail = nucleus + ending
+    syllable_ending_mapping = rules.SYLLABLE_ENDING_MAPPING
+    if language == "de":
+        syllable_ending_mapping = {
+            **syllable_ending_mapping,
+            **vietifyRuleWeak.GERMAN_R_VOCALIZATION,
+        }
+        if not has_following_consonant:
+            syllable_ending_mapping.update(
+                vietifyRuleWeak.GERMAN_R_VOCALIZATION_WITHOUT_CODA,
+            )
 
-    is_null_vowel = tail not in rules.SYLLABLE_ENDING_MAPPING
+    is_null_vowel = tail not in syllable_ending_mapping
 
     vie = (
         rules.LETTER_MAPPING.get(head, "")
-        + rules.SYLLABLE_ENDING_MAPPING.get(
+        + syllable_ending_mapping.get(
             tail,
             rules.NULL_MAPPING,
         )
@@ -282,6 +294,7 @@ def syllable_to_vie(
     is_last_syllable: bool = False,
     *,
     mode: RuleMode,
+    has_following_consonant: bool = False,
 ) -> str:
     """Convert one parser AST syllable into Vie spelling.
 
@@ -294,6 +307,8 @@ def syllable_to_vie(
     vie_syllable, is_null_vowel = _build_vie_syllable(
         syllable,
         rules,
+        language=options.get("language"),
+        has_following_consonant=has_following_consonant,
     )
 
     if is_null_vowel:
@@ -405,6 +420,11 @@ def _convert_ast_to_vie(
                 idx == last_syllable_idx
             ),
             mode=mode,
+            has_following_consonant=(
+                idx + 1 < len(ast)
+                and bool(ast[idx + 1].get("initial"))
+                and not ast[idx + 1].get("nucleus")
+            ),
         )
 
         if idx != 0 and vie_syl:

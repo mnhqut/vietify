@@ -19,6 +19,8 @@ ENDING_CONSONANT_MAPPING: dict[str, str] = {
     "l": "l",
     "ɫ": "l",
     "ʁ": "ʁ",
+    "x": "kh",
+    "ç": "kh"
 }
 
 NUCLEUS_MAPPING: dict[str, str] = {
@@ -43,6 +45,9 @@ NUCLEUS_MAPPING: dict[str, str] = {
     # not exact equivalence in vietnamese 
     "aʊ": "ao",
     "yi": "üi",
+
+    #german
+    "ɔʏ": "oi",
 
     # "j": "i",
     "jaʊ": "iau",
@@ -76,12 +81,15 @@ NUCLEUS_MAPPING: dict[str, str] = {
     "ɑ": "ä",
     "ɑɛ": "ae",
 
-    #very similar to /i/ and /u/ just mostly length, slightly less forward/backward
+    #very similar to /i/ and /u/ /y/ just mostly length, slightly less forward/backward
     "ɪ": "i",
     "ʊ": "u",
+    "ʏ": "ü",
+
     "y": "ü",
     "ø": "ø",
     "œ": "œ",
+    "ɐ": "â",
 
     "ɑ̃": "oong",
     "ɛ̃": "ăng",
@@ -115,11 +123,14 @@ LETTER_MAPPING: dict[str, str] = {
     " ": "",
     ",": "",
     "/": "",
-    "ˈ": " ",
+    # "ˈ": " ",
+    "ˈ": "",
     "ˌ": "",
 
     # t aspiration rule
-   "ˈt": "th",
+   "tˈ": "th",         #stress mark position produced by espeak is weird
+    "tˌ": "th",
+    "ˈt": "th",         #stress mark position produced by espeak is weird
     "ˌt": "th",
     "t": "t",  
 
@@ -132,7 +143,7 @@ LETTER_MAPPING: dict[str, str] = {
     "h": "h",
     "i": "i",
     "k": "k",
-    "kw": "qu",
+    # "kw": "qu",
     "m": "m",
     "n": "n",
     "p": "p",
@@ -188,4 +199,39 @@ LETTER_MAPPING: dict[str, str] = {
 
     "ʁ": "ʁ",
 
+    #german
+    "ʏ": "ü",
+    "ɐ": "â",
+    "x": "kh",
+    "ç": "kh",
+    "ts": "ts",
+    "pf": "pf"
+}
+
+GERMAN_R_VOCALIZATION: dict[str, str] = {
+    # German R-vocalization
+    "ɪr": "iê",  # become "ia" if behind have nothing else
+    "ir": "iê", # become "ia" if behind have nothing else
+
+    "ʏr": "üê", # become "üa" if behind have nothing else
+    "yr": "üê", # become "üa" if behind have nothing else  #make it "uya/uyê" in the strong version
+
+    "ʊr": "ươ", # become "ưa" if behind have nothing else
+    "ur": "uô", # become "ua" if behind have nothing else
+
+    "ɛr": "eơ",
+    "er": "êơ",
+
+    "œr": "œơ",
+    "ør": "øơ",
+
+    "ɔr": "oơ",
+    "or": "ôơ",
+
+    "ar": "aơ",
+}
+
+GERMAN_R_VOCALIZATION_WITHOUT_CODA: dict[str, str] = {
+    "ɪr": "ia",
+    "ir": "ia",
 }

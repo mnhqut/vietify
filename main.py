@@ -42,7 +42,7 @@ def normalize_phonemized_ipa(
         normalized
         .replace("ɚ", "əɹ")
         .replace("ɜ", "ə")
-        .replace("ɐ", "ə")
+        # .replace("ɐ", "ə")
         .replace("ᵻ", "ɪ")
         .replace("ɾ", "r")
         .replace("ɥ", "w")
@@ -68,16 +68,17 @@ def text_to_vietify(
                 backend="espeak",
                 strip=True,
                 preserve_punctuation=True,
+                with_stress=True
             ),
         )
 
+    if mode == "ipa":
+        return ipa
+    
     ipa = normalize_phonemized_ipa(
         ipa,
         preserve_nasalization=language == "fr",
     )
-
-    if mode == "ipa":
-        return ipa
 
     converted_words = []
 
