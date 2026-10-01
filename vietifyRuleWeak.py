@@ -131,11 +131,41 @@ SYLLABLE_ENDING_MAPPING: dict[str, str] = {
         for nucleus, mapped_nucleus in NUCLEUS_MAPPING.items()
         for ending, mapped_ending in ENDING_CONSONANT_MAPPING.items()
     },
+
+    # ia/ja + ending → iê + mapped ending
+    **{
+        nucleus + ending: "iê" + mapped_ending
+        for nucleus in ("ia", "ja", "jə", "iə")
+        for ending, mapped_ending in ENDING_CONSONANT_MAPPING.items()
+    },
+
+    # ua/wa + ending → uô + mapped ending
+    **{
+        nucleus + ending: "uô" + mapped_ending
+        for nucleus in ("uə", "wə")
+        for ending, mapped_ending in ENDING_CONSONANT_MAPPING.items()
+    },
+
+    # uỵa + ending → uyệ + mapped ending
+    **{
+        nucleus + ending: "uô" + mapped_ending
+        for nucleus in ("wiə")
+        for ending, mapped_ending in ENDING_CONSONANT_MAPPING.items()
+    },
+
     # Overrides
     "ɔŋ": "oong", 
     "jəŋ": "iêng",
 
-    # later may need to add rule : ich/ac
+    #  rule : ich/ac
+    "ec": "ach",
+    "êc": "êch",
+    "ic": "ich",
+    "yc": "ych",
+    "oec" : "oach",
+    "uêc" : "uêch",
+    "uyc" : "uych",
+
 }
 
 
@@ -219,7 +249,7 @@ LETTER_MAPPING: dict[str, str] = {
     "ø": "ø",
     "œ": "œ",
 
-    "ʁ": "ʁ",
+    "ʁ": "ʁ",  # this has a voiceless complementation at end of sentence/ before or after voiceless obstruent. but hard and costly to encode this...
 
     #german
     "ʏ": "ü",
