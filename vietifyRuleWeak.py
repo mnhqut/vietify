@@ -9,6 +9,7 @@ ENDING_CONSONANT_MAPPING: dict[str, str] = {
     "t": "t",
     "d": "d",
     "k": "c",
+    "g": "c",
     "p": "p",
     "b": "b",
     "g": "g",
@@ -19,6 +20,10 @@ ENDING_CONSONANT_MAPPING: dict[str, str] = {
 
 
     "v": "v",
+    "f" : "f",
+    "s" : "s",
+    "z" : "z",
+
     "l": "l",
     "ɫ": "l",
 
@@ -31,7 +36,8 @@ ENDING_CONSONANT_MAPPING: dict[str, str] = {
     "ts": "ts",
     "pf": "pf",
     "r" : "r"
-}
+}  
+
 
 NUCLEUS_MAPPING: dict[str, str] = {
     # exact 1-1 correspondant
@@ -259,4 +265,8 @@ GERMAN_R_VOCALIZATION: dict[str, str] = {
 GERMAN_R_VOCALIZATION_WITHOUT_CODA: dict[str, str] = {
     "ɪr": "ia",
     "ir": "ia",
+    "ʏr": "üa", 
+    "yr": "üa", 
+    "ʊr": "ưa", 
+    "ur": "ua", 
 }

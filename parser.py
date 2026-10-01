@@ -14,10 +14,10 @@ Syllable =
     / SyllableBare
 
 SyllableWithEnding =
-    Stress? Consonant Stress? SyllableEnding
+    Stress? InitialConsonant Stress? SyllableEnding
 
 SyllableWithConsonant =
-    Stress? Consonant
+    Stress? InitialConsonant
 
 SyllableBare =
     Stress? SyllableEnding
@@ -42,7 +42,7 @@ BareDiphthong =
 BareVowel =
     Vowel
 
-Consonant =
+InitialConsonant =
       "b"
     / "tʃ"
     / "tɹ"
@@ -102,25 +102,32 @@ EndingConsonant =
     / "n"
     / "ŋ"
 
+# this are mostly kept as they are for 'weak vietify' and turn to an approximate one in 'strong vietify'
 ApprxEndingConsonant = 
 # i purposefully only choose stop consonants and l here
      "b"
     / "g"
-    / "v"
     / "d"
+    
+    / "v"
+    / "f"
+    / "s"
+    / "z"
+
     / "l"
     / "ɫ"
 
     # french 
-    # / "ɲ"   # complicated to treat this as ending consonant
     / "ʁ"
     
     #german
     / "ts"
     / "pf"
+
     / "r"
     / "x"
     / "ç"
+# other consonant are treated as seperated syllable
 
 Vowel =
     #fr
@@ -308,7 +315,7 @@ class Visitor(NodeVisitor):
         """Return true diphthong text."""
         return node.text
 
-    def visit_Consonant(self, node, children):
+    def visit_InitialConsonant(self, node, children):
         """Return initial consonant, normalizing ``kw`` stress placement."""
         text = node.text
 

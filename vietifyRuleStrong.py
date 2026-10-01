@@ -4,225 +4,269 @@ COMBINE_GRAVE = "\u0300"
 
 NULL_MAPPING = "_"
 
+ENDING_CONSONANT_MAPPING: dict[str, str] = {
+    "t": "t",
+    "d": "t",
+    "k": "c",
+    "g": "c",
+    "p": "p",
+    "b": "p",
 
-SYLLABLE_ENDING_MAPPING: dict[str, str] = {
+
+    "m": "m",
+    "n": "n",
+    "ŋ": "ng",
+
+
+    "v": "p",
+    "f" : "p",
+    "s" : "t",
+    "z" : "t",
+
+    "l": "l",
+    "ɫ": "l",
+
+    "ʁ": "ʁ",
+
+    #german
+    "x": "c",
+    "ç": "c",
+
+    "ts": "t",
+    "pf": "p",
+    "r" : "r"
+} 
+
+
+NUCLEUS_MAPPING: dict[str, str] = {
+    # exact 1-1 correspondant
     "a": "a",
     "aɪ": "ai",
-    "aʊ": "ao",
     "e": "ê",
-    "e": "ê",
-    "eb": "êb",
-    "ek": "êc",
-    "em": "êm",
-    "en": "ên",
-    "ep": "êp",
-    "et": "êt",
-    "eŋ": "êng",
-    "eɡ": "êg",
     "eɪ": "ây",
     "i": "i",
-    "ib": "ip",
-    "ih": "i",
-    "ik": "ich",
-    "im": "im",
-    "in": "in",
-    "ip": "ip",
-    "it": "it",
-    "iŋ": "inh",
     "iɛ": "ia",
-    "iɡ": "ic",
-    "j": "i",
-    "jaʊ": "au",
-    "jeɪ": "ây",
-    "ji": "i",
-    "joʊ": "au",
-    "ju": "iu",
-    "jæ": "ye",
-    "jɑ": "ya",
-    "jɔ": "yo",
-    "jə": "ơ",
-    "jɛ": "ie",
-    "jɪ": "y",
-    "jʊ": "iu",
     "o": "o",
     "oʊ": "âu",
     "u": "u",
-    "ub": "up",
-    "uh": "ơ",
-    "uk": "uc",
-    "um": "um",
-    "un": "un",
-    "up": "up",
-    "ut": "ut",
-    "uŋ": "oong",
-    "uɛ": "ue",
-    "uɡ": "uc",
-    "æ": "e",
-    "æb": "ep",
-    "æk": "ech",
-    "æm": "em",
-    "æn": "en",
-    "æp": "ep",
-    "æt": "et",
-    "æŋ": "eng",
-    "æɡ": "ec",
-    "ɑ": "a",
-    "ɑb": "ap",
-    "ɑh": "a",
-    "ɑk": "ac",
-    "ɑm": "am",
-    "ɑn": "an",
-    "ɑp": "ap",
-    "ɑt": "at",
-    "ɑŋ": "ang",
-    "ɑɛ": "",
-    "ɑɡ": "ac",
+    "uɛ": "oe", ##
     "ɔ": "o",
-    "ɔb": "op",
-    "ɔh": "o",
-    "ɔk": "ooc",
-    "ɔm": "om",
-    "ɔn": "on",
-    "ɔp": "op",
-    "ɔt": "ot",
-    "ɔŋ": "oong",
-    "ɔɡ": "ooc",
     "ɔɪ": "oi",
     "ə": "ơ",
-    "əb": "ơp",
-    "əh": "ơ",
-    "eɪt": "êt",
     "əj": "ơi",
-    "ək": "ơc",
-    "əm": "ơm",
-    "ən": "ơn",
-    "əp": "ơp",
-    "ət": "ơt",
-    "əŋ": "ơng",
-    "əɡ": "ơc",
     "ɛ": "e",
-    "ɛb": "ep",
-    "ɛh": "ê",
-    "ɛk": "êch",
-    "ɛm": "em",
-    "ɛn": "en",
-    "ɛp": "ep",
-    "ɛt": "et",
-    "ɛŋ": "êng",
-    "ɛɡ": "ec",
-    "ɪ": "i",
-    "ɪb": "ip",
-    "ɪh": "i",
-    "ɪk": "ich",
-    "ɪm": "im",
-    "ɪn": "in",
-    "ɪp": "ip",
-    "ɪt": "it",
-    "ɪŋ": "inh",
-    "ɪɛ": "ie",
-    "ɪɡ": "ich",
-    "jəŋ": "giang",
-    "ʊ": "u",
-    "ʊb": "up",
-    "ʊk": "uc",
-    "ʊm": "um",
-    "ʊn": "un",
-    "ʊp": "up",
-    "ʊt": "ut",
-    "ʊŋ": "uung",
-    "ʊɡ": "uc",
-    "eɪn": "ên",
 
+    "ɨ": "ư",
+ 
+
+    # not exact equivalence in vietnamese 
+    "aʊ": "ao",
+    "yi": "ui",
+
+    #german
+    "ɔʏ": "oi",
+
+    # "j": "i",
+    "jaʊ": "iau",
+    "jeɪ": "iây",
+    "ji": "i",
+    "joʊ": "iau",
+    "ju": "iu",
+    "jæ": "iae",
+    "jɑ": "ia",
+    "jɔ": "io",
+    "jə": "ia",
+    "jɛ": "iê",
+    "jɪ": "i",
+    "jʊ": "iu",
+
+    "waʊ": "uau",
+    "weɪ": "uây",
+    "wi": "ui",
+    "woʊ": "uâu",
+    "wu": "u",
+    "wæ": "ua",
+    "wɑ": "ua",
+    "wɔ": "uo",
+    "wə": "ua",
+    "wɛ": "uê",
+    "wɪ": "ui",
+    "wʊ": "u",
     "wa": "oa",
+
+    "æ": "a",
+    "ɑ": "a",
+    "ɑɛ": "a",
+
+    #very similar to /i/ and /u/ /y/ just mostly length, slightly less forward/backward
+    "ɪ": "i",
+    "ʊ": "u",
+    "ʏ": "uy",
 
     "y": "uy",
     "ø": "ơ",
     "œ": "ơ",
+    "ɐ": "ơ",
+
     "ɑ̃": "oong",
     "ɛ̃": "ăng",
     "ɔ̃": "ông",
     "œ̃": "ăng",
-    "jɑ̃": "ioong",
-    "jɛ̃": "iăng",
-    "jɔ̃": "iông",
-    "jœ̃": "iăng",
 
-    "iʁ": "ic",
-    "eʁ": "ec",
-    "ɛʁ": "êc",
-    "aʁ": "ac",
-    "ɑʁ": "ac",
-    "oʁ": "ôc",
-    "ɔʁ": "oc",
-    "uʁ": "uc",
-    "yʁ": "uyc",
-    "øʁ": "ơc",
-    "œʁ": "ơc",
-    "əʁ": "ơc",   
+    "jɑ̃": "i-oong",
+    "jɛ̃": "i-ăng",
+    "jɔ̃": "i-ông",
+    "jœ̃": "i-ăng",
+
+    # russian
+    "ɵ": "ô"
+
 }
 
 
-LETTER_MAPPING: dict[str, str] = {
-    # t aspiration rule
-    "ˈt": "th",
-    "ˌt": "th",
-    "t": "th",
+SYLLABLE_ENDING_MAPPING: dict[str, str] = {
+    **NUCLEUS_MAPPING,
+    **{
+        nucleus + ending: mapped_nucleus + mapped_ending
+        for nucleus, mapped_nucleus in NUCLEUS_MAPPING.items()
+        for ending, mapped_ending in ENDING_CONSONANT_MAPPING.items()
+    },
+    # Overrides
+    "ɔŋ": "oong", 
+    "jəŋ": "iêng",
 
+    # later may need to add rule : ich/ac
+}
+
+LETTER_MAPPING: dict[str, str] = {
+    # exact 1-1 correspondant
     " ": "",
     ",": "",
     "/": "",
+    # "ˈ": " ",
+    "ˈ": "",
+    "ˌ": "",
+
+    # t aspiration rule
+   "tˈ": "th",         #stress mark position produced by espeak is weird
+    "tˌ": "th",
+    "ˈt": "th",         #stress mark position produced by espeak is weird
+    "ˌt": "th",
+    "t": "t",  
+
     "a": "a",
     "b": "b",
     "d": "đ",
-    "dʒ": "d",
     "e": "e",
+    "o": "ô",
     "f": "ph",
     "h": "h",
     "i": "i",
-    "j": "d",
     "k": "k",
-    "kw": "qu",
+    # "kw": "qu",
     "m": "m",
     "n": "n",
-    "o": "â",
     "p": "p",
     "s": "x",
-    "tɹ": "tr",
     "tʃ": "ch",
     "u": "u",
     "v": "v",
     "w": "w",
-    "z": "d",
-    "æ": "e",
-    "ð": "đ",
     "ŋ": "ng",
-    "ɑ": "a",
+
     "ɔ": "o",
     "ə": "ơ",
     "ɛ": "ê",
-    "ɝ": "ơr",
-    "ɡ": "g",
-    "ɪ": "i",
-    "ɫ": "l",
     "l": "l",
-    "ɹ": "r",
-    "ʃ": "s",
+
+    "tɹ": "tr",
+
+    "z": "z",
+    "r": "r",
+
+    # french
+    "ɲ": "nh",
+
+
+
+    # not exact equivalence in vietnamese 
+    "dʒ": "gi",
+    "ʒ": "gi",  ##gi
+    "j": "gi",
+ 
+    "æ": "a",
+    "ɑ": "a",
+    "ɪ": "i",
     "ʊ": "u",
-    "ʒ": "d",
-    "ˈ": " ",
-    "ˌ": "",
-    "θ": "th",
+    "ɝ": "ơ",
 
-
+    "ɡ": "g",
+    "ɫ": "l",
+    "ɹ": "r",
+    "ʃ": "sh",
+    "θ": "s",
+    "ð": "z",
 
     # french
     "y": "uy",
-    "ø": "ơ",
-    "œ": "ơ",
+
     "ɑ̃": "oong",
     "ɛ̃": "ăng",
     "ɔ̃": "ông",
     "œ̃": "ăng",
+
+    "ø": "ơ",
+    "œ": "ơ",
+
     "ʁ": "g",
-    "ɲ": "nh",
+
+    #german
+    "ʏ": "uy",
+    "ɐ": "ơ",
+    "x": "kh",
+    "ç": "kh",
+    "ts": "s",
+    "pf": "ph",
+
+    # russian
+    "ʐ" : "zh",  # espeak use this letter for /ʒ/ sound, but in russian it is /ʐ/
+    "ɕ" : "sh",  # espeak use this letter for /ʃ/ sound, but in russian it is /ɕ/
+    "ʑ" : "zh",
+    # "ɭ" : "l",
+
+    "ɨ": "ư",
+    "ɵ": "ô"
 }
+
+GERMAN_R_VOCALIZATION: dict[str, str] = {
+    # German R-vocalization
+    "ɪr": "iê",  # become "ia" if behind have nothing else
+    "ir": "iê", # become "ia" if behind have nothing else
+
+    "ʏr": "uyê", # become "üa" if behind have nothing else
+    "yr": "uyê", # become "üa" if behind have nothing else  #make it "uya/uyê" in the strong version
+
+    "ʊr": "ươ", # become "ưa" if behind have nothing else
+    "ur": "uô", # become "ua" if behind have nothing else
+
+    "ɛr": "e",
+    "er": "ê",
+
+    "œr": "ơ",
+    "ør": "ơ",
+
+    "ɔr": "o",
+    "or": "ô",
+
+    "ar": "a",
+}
+
+GERMAN_R_VOCALIZATION_WITHOUT_CODA: dict[str, str] = {
+    "ɪr": "ia",
+    "ir": "ia",
+    "ʏr": "uya", 
+    "yr": "uya", 
+    "ʊr": "ưa", 
+    "ur": "ua", 
+}
+

@@ -18,14 +18,17 @@ else:
 
 
 PHONEMIZER_LANGUAGES = {
-    "en": "en-gb",
+    "en-gb": "en-gb",
+    "en-us": "en-us",
+    "en-au": "en-au",
+
     "fr": "fr-fr",
     "de": "de",
+    "ru": "ru", 
 
     "ch": "cmn",
     "ja": "ja",
     "ko": "ko",
-    "ru": "ru",   
 }
 
 
@@ -167,12 +170,24 @@ def main() -> int:
     parser.add_argument(
         "-l",
         "--language",
-        choices=("en", "fr", "de", "ch", "ja", "ko", "ru", "ipa"),
-        default="en",
+        choices=(
+            "en-gb",
+            "en-us",
+            "en-au",
+            "fr",
+            "de",
+            "ru",
+            "ch",
+            "ja",
+            "ko",
+            "ipa",
+        ),
+        default="en-us",
         help=(
-            "Input language: en (English), fr (French), de (German), "
-            "ch (Chinese), ja (Japanese), ko (Korean), ru (Russian), "
-            "or ipa (already-transcribed IPA). Default: en."
+            "Input language: en-gb (British English), en-us (American English), "
+            "en-au (Australian English), fr (French), de (German), ru (Russian), "
+            "ch (Chinese), ja (Japanese), ko (Korean), or ipa (already-transcribed IPA). "
+            "Default: en-us."
         ),
     )
     parser.add_argument(
