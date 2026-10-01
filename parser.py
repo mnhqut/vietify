@@ -106,9 +106,9 @@ EndingConsonant =
 ApprxEndingConsonant = 
 # i purposefully only choose stop consonants and l here
      "b"
-    / "g"
+    / "ɡ"
     / "d"
-    
+
     / "v"
     / "f"
     / "s"

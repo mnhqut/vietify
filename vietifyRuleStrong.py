@@ -8,7 +8,7 @@ ENDING_CONSONANT_MAPPING: dict[str, str] = {
     "t": "t",
     "d": "t",
     "k": "c",
-    "g": "c",
+    "ɡ": "c",
     "p": "p",
     "b": "p",
 
@@ -230,7 +230,7 @@ LETTER_MAPPING: dict[str, str] = {
     "ʊ": "u",
     "ɝ": "ơ",
 
-    "ɡ": "g",
+    "ɡ": "ɡ",
     "ɫ": "l",
     "ɹ": "r",
     "ʃ": "sh",
@@ -248,7 +248,7 @@ LETTER_MAPPING: dict[str, str] = {
     "ø": "ơ",
     "œ": "ơ",
 
-    "ʁ": "g",
+    "ʁ": "ɡ",
 
     #german
     "ʏ": "uy",

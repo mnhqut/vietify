@@ -50,62 +50,6 @@ def normalize_nfd(value: str) -> str:
     return unicodedata.normalize("NFD", value)
 
 
-def add_tonal_mark_to_vowel(vie: str, tonal_mark: str) -> str:
-    """Attach tonal mark to preferred Vietnamese vowel, falling back by priority."""
-    # Prefer ê, â, ă, ô, ơ, ư
-    match = re.search(r"[êâăôơư]", vie, re.IGNORECASE)
-
-    if match:
-        start, end = match.span()
-        vowel = vie[start:end]
-        return (
-            vie[:start]
-            + normalize_nfc(vowel + tonal_mark)
-            + vie[end:]
-        )
-
-    # Then e, a, o, u, i
-    match = re.search(r"[eao ui]".replace(" ", ""), vie, re.IGNORECASE)
-
-    if match:
-        start, end = match.span()
-        vowel = vie[start:end]
-        return (
-            vie[:start]
-            + normalize_nfc(vowel + tonal_mark)
-            + vie[end:]
-        )
-
-    # Finally y
-    match = re.search(r"y", vie, re.IGNORECASE)
-
-    if match:
-        start, end = match.span()
-        vowel = vie[start:end]
-        return (
-            vie[:start]
-            + normalize_nfc(vowel + tonal_mark)
-            + vie[end:]
-        )
-
-    return vie
-
-
-def add_tonal_mark(vie: str, is_stress: int | None = None) -> str:
-    """Apply Vietnamese tone mark based on syllable ending and stress."""
-    if re.search(r"(ch|t|p|c)$", vie):
-        return add_tonal_mark_to_vowel(
-            vie,
-            COMBINE_ACUTE if is_stress else COMBINE_DOT,
-        )
-
-    if not is_stress:
-        return add_tonal_mark_to_vowel(vie, COMBINE_GRAVE)
-
-    return vie
-
-
-
 def vie_consonant_rule(consonant: str, vowel: str) -> str:
     """Resolve c/k alternation required by following vowel."""
 
@@ -340,14 +284,14 @@ def syllable_to_vie(
             vie_syllable,
         )
 
-    if mode == "strong":
-        vie_syllable = add_tonal_mark(
-            vie_syllable,
-            syllable.get("stress"),
-        )
+    # if mode == "strong":
+        # vie_syllable = add_tonal_mark(
+        #     vie_syllable,
+        #     syllable.get("stress"),
+        # )
 
-        if options.get("uppercaseStress") and syllable.get("stress"):
-            return vie_syllable.upper()
+    if options.get("uppercaseStress") and syllable.get("stress"):
+        return vie_syllable.upper()
 
     return vie_syllable
 

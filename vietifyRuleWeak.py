@@ -9,10 +9,9 @@ ENDING_CONSONANT_MAPPING: dict[str, str] = {
     "t": "t",
     "d": "d",
     "k": "c",
-    "g": "c",
+    "ɡ": "ɡ",
     "p": "p",
     "b": "b",
-    "g": "g",
 
     "m": "m",
     "n": "n",
@@ -149,7 +148,7 @@ SYLLABLE_ENDING_MAPPING: dict[str, str] = {
     # uỵa + ending → uyệ + mapped ending
     **{
         nucleus + ending: "uô" + mapped_ending
-        for nucleus in ("wiə")
+        for nucleus in ["wiə"]
         for ending, mapped_ending in ENDING_CONSONANT_MAPPING.items()
     },
 
@@ -231,7 +230,7 @@ LETTER_MAPPING: dict[str, str] = {
     "ʊ": "u",
     "ɝ": "ơr",
 
-    "ɡ": "g",
+    "ɡ": "ɡ",
     "ɫ": "l",
     "ɹ": "r",
     "ʃ": "sh",

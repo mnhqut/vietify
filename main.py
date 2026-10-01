@@ -104,7 +104,8 @@ def text_to_vietify(
                 backend="espeak",
                 strip=True,
                 preserve_punctuation=True,
-                with_stress=True
+                with_stress=False # espeak put stress in the middle of a syllable after the initial consonant
+                # this can make things complicated for affricates/ glides ... 
             ),
         )
 
