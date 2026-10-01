@@ -10,17 +10,27 @@ ENDING_CONSONANT_MAPPING: dict[str, str] = {
     "d": "d",
     "k": "c",
     "p": "p",
+    "b": "b",
+    "g": "g",
+
     "m": "m",
     "n": "n",
     "ŋ": "ng",
-    "b": "b",
-    "g": "g",
+
+
     "v": "v",
     "l": "l",
     "ɫ": "l",
+
     "ʁ": "ʁ",
+
+    #german
     "x": "kh",
-    "ç": "kh"
+    "ç": "kh",
+
+    "ts": "ts",
+    "pf": "pf",
+    "r" : "r"
 }
 
 NUCLEUS_MAPPING: dict[str, str] = {
@@ -40,6 +50,8 @@ NUCLEUS_MAPPING: dict[str, str] = {
     "ə": "ơ",
     "əj": "ơi",
     "ɛ": "e",
+
+    "ɨ": "ư",
  
 
     # not exact equivalence in vietnamese 
@@ -100,6 +112,9 @@ NUCLEUS_MAPPING: dict[str, str] = {
     "jɛ̃": "iăng",
     "jɔ̃": "iông",
     "jœ̃": "iăng",
+
+    # russian
+    "ɵ": "ô"
 
 }
 
@@ -162,6 +177,7 @@ LETTER_MAPPING: dict[str, str] = {
     "tɹ": "tr",
 
     "z": "z",
+    "r": "r",
 
     # french
     "ɲ": "nh",
@@ -205,7 +221,16 @@ LETTER_MAPPING: dict[str, str] = {
     "x": "kh",
     "ç": "kh",
     "ts": "ts",
-    "pf": "pf"
+    "pf": "pf",
+
+    # russian
+    "ʐ" : "zh",  # espeak use this letter for /ʒ/ sound, but in russian it is /ʐ/
+    "ɕ" : "sh",  # espeak use this letter for /ʃ/ sound, but in russian it is /ɕ/
+    "ʑ" : "zh",
+    # "ɭ" : "l",
+
+    "ɨ": "ư",
+    "ɵ": "ô"
 }
 
 GERMAN_R_VOCALIZATION: dict[str, str] = {

@@ -50,7 +50,7 @@ Consonant =
     # german
     / "ts"
     / "pf"
-    
+
     / "t"
     / "k"
     / "z"
@@ -85,7 +85,13 @@ Consonant =
     / "x"
     / "ʔ"
 
+    # russian
+    / "ʐ" # espeak use this letter for /ʒ/ sound, but in russian it is /ʐ/
+    / "ɕ"  # espeak use this letter for /ʃ/ sound, but in russian it is /ɕ/
+    / "ʑ" 
+    / "ɭ"
 
+# whatever appear in EndingConsonant or ApprxEndingConsonant needs to be mapped in ENDING_CONSONANT_MAPPING (otherwise will be mapped to null )
 EndingConsonant =
 # very specific for vietnamese
      "t" !"ʃ"
@@ -113,6 +119,8 @@ ApprxEndingConsonant =
     / "ts"
     / "pf"
     / "r"
+    / "x"
+    / "ç"
 
 Vowel =
     #fr
@@ -142,6 +150,9 @@ Vowel =
     / "ɐ"
     / "ʏ"
 
+    # russian
+    / "ɵ"
+    / "ɨ"
 
 Stress =
       "ˈ"

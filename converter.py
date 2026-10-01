@@ -275,7 +275,7 @@ def _build_vie_syllable(
                 vietifyRuleWeak.GERMAN_R_VOCALIZATION_WITHOUT_CODA,
             )
 
-    is_null_vowel = tail not in syllable_ending_mapping
+    is_null_ending = tail not in syllable_ending_mapping
 
     vie = (
         rules.LETTER_MAPPING.get(head, "")
@@ -285,7 +285,7 @@ def _build_vie_syllable(
         )
     )
 
-    return _replace_vie_syllable_patterns(vie), is_null_vowel
+    return _replace_vie_syllable_patterns(vie), is_null_ending
 
 
 def syllable_to_vie(

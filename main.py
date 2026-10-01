@@ -31,6 +31,7 @@ PHONEMIZER_LANGUAGES = {
 
 def normalize_phonemized_ipa(
     ipa: str,
+    language: str,
     *,
     preserve_nasalization: bool = False,
 ) -> str:
@@ -38,15 +39,47 @@ def normalize_phonemized_ipa(
     if not preserve_nasalization:
         normalized = normalized.replace("̃", "")
 
+    if (language == "ru") :  # russian doesnt have phoneme /y/ and so on but espeak somehow use these letter
+        normalized = normalized.replace("y", "ɨ")
+
     return (
         normalized
+        # english
         .replace("ɚ", "əɹ")
         .replace("ɜ", "ə")
-        # .replace("ɐ", "ə")
         .replace("ᵻ", "ɪ")
         .replace("ɾ", "r")
         .replace("ɥ", "w")
-        .replace("ʌ", "ɑ")
+        .replace("ʌ", "ɔ")
+
+       #russian 
+        .replace("ɭ" ,"l")
+        .replace("mʲ", "mj")
+        .replace("nʲ", "nj")
+
+        .replace("tʲ", "tj")
+        .replace("dʲ", "dj")
+        .replace("kʲ", "kj")
+        .replace("ɡʲ", "ɡj")
+        .replace("pʲ", "pj")
+        .replace("bʲ", "bj")
+        
+        .replace("fʲ", "fj")
+        .replace("vʲ", "vj")
+        .replace("sʲ", "sj")
+        .replace("zʲ", "zj")
+        .replace("ʂʲ", "ʂj")
+        .replace("ʐʲ", "ʐj")   
+        .replace("xʲ", "xj")
+
+        .replace("lʲ", "lj")
+        .replace("rʲ", "rj")
+        
+
+        .replace("tʃʲ", "tʃj")
+        # .replace("dʒʲ", "dʒj")
+        # .replace("ɕʲ", "ɕj")
+        # .replace("ʑʲ", "ʑj")      
 
     )
 
@@ -77,6 +110,7 @@ def text_to_vietify(
     
     ipa = normalize_phonemized_ipa(
         ipa,
+        language,
         preserve_nasalization=language == "fr",
     )
 
