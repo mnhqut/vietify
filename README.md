@@ -67,7 +67,7 @@ Select the input language with `-l` or `--language`:
 | `en`   | English (US phonemizer voice) |
 | `fr`   | French                        |
 | `de`   | German                        |
-| `ch`   | Mandarin Chinese              |
+| `ch`   | Mandarin Chinese pinyin       |
 | `ja`   | Japanese                      |
 | `ko`   | Korean                        |
 | `ru`   | Russian                       |
@@ -77,6 +77,15 @@ For example:
 
 ```sh
 python main.py -l fr "Bonjour"
+```
+
+For Mandarin, provide pinyin rather than Chinese characters. Pinyin tone
+marks and trailing tone numbers (1-5, with 0 also accepted for neutral tone)
+are supported. Separate syllables with spaces:
+
+```sh
+python main.py -l ch -m weak "nǐ hǎo"
+python main.py -l ch -m strong "ni3 hao3"
 ```
 
 If you already have an IPA transcription, use `ipa` to skip text phonemization:
@@ -138,8 +147,6 @@ For pronunciation from ordinary text, use the CLI. Text phonemization is handled
 ## License
 
 This project is released into the public domain. See [LICENSE](LICENSE).
-
-
 
 
 

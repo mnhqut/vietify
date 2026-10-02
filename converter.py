@@ -3,18 +3,30 @@ import re
 import unicodedata
 from typing import Literal, Protocol
 
-from . import vietifyRuleStrong, vietifyRuleWeak
-from .vietifyRuleStrong import (
-    COMBINE_ACUTE,
-    COMBINE_DOT,
-    COMBINE_GRAVE,
+from parsimonious.exceptions import ParseError
+
+from . import (
+    pinyinRuleStrong,
+    pinyinRuleWeak,
+    vietifyRuleStrong,
+    vietifyRuleWeak,
 )
+
 from .parser import parse
+from .pinyinParser import parse as parse_pinyin
 
 logger = logging.getLogger(__name__)
 
 RuleMode = Literal["weak", "strong"]
+COMBINE_ACUTE = "\u0301"      # sắc: á
+COMBINE_GRAVE = "\u0300"      # huyền: à
+COMBINE_HOOK_ABOVE = "\u0309" # hỏi: ả
+COMBINE_TILDE = "\u0303"      # ngã: ã
+COMBINE_DOT = "\u0323"        # nặng: ạ
+COMBINE_NONE = ""              # ngang: a
 
+
+COMBINE_MACRON = "\u0304"  # 1st: mā
 
 class ConversionRules(Protocol):
     """Rule table required by syllable-to-Vie conversion."""
@@ -29,11 +41,20 @@ _RULES: dict[RuleMode, ConversionRules] = {
     "strong": vietifyRuleStrong,
 }
 
+_PINYIN_RULES: dict[RuleMode, ConversionRules] = {
+    "weak": pinyinRuleWeak,
+    "strong": pinyinRuleStrong,
+}
 
-def _rules_for_mode(mode: RuleMode) -> ConversionRules:
+
+def _rules_for_mode(
+    mode: RuleMode,
+    language: str | None = None,
+) -> ConversionRules:
     """Return rule table for mode, raising ValueError for unsupported modes."""
+    rule_tables = _PINYIN_RULES if language == "ch" else _RULES
     try:
-        return _RULES[mode]
+        return rule_tables[mode]
     except KeyError:
         raise ValueError(
             f"mode must be 'weak' or 'strong', got {mode!r}"
@@ -246,7 +267,7 @@ def syllable_to_vie(
     insert epenthetic vowels. Weak mode removes null-vowel placeholders.
     """
     options = options or {}
-    rules = _rules_for_mode(mode)
+    rules = _rules_for_mode(mode, options.get("language"))
 
     vie_syllable, is_null_vowel = _build_vie_syllable(
         syllable,
@@ -512,3 +533,98 @@ def ipa_to_vie(
     )
 
     return results
+
+def _convert_tonal_ast_to_vie(
+    ast: list[dict],
+    options: dict,
+    mode: RuleMode,
+) -> str:
+    """Convert parsed Pinyin syllables and attach their tone marks."""
+
+    last_syllable_idx = len(ast) - 1
+    vie_parts = []
+    tone_marks = {
+        1: COMBINE_MACRON,
+        2: COMBINE_ACUTE,
+        3: COMBINE_HOOK_ABOVE,
+        4: COMBINE_GRAVE,
+        5: "",
+    }
+
+    for idx, syllable in enumerate(ast):
+        tone = syllable.get("tone", 5)
+
+        if tone not in tone_marks:
+            raise ValueError(
+                f"invalid Chinese tone: {tone!r}"
+            )
+
+        vie_syl = syllable_to_vie(
+            syllable=syllable,
+            options=options,
+            is_last_syllable=(
+                idx == last_syllable_idx
+            ),
+            mode=mode,
+            has_following_consonant=(
+                idx + 1 < len(ast)
+                and bool(ast[idx + 1].get("initial"))
+                and not ast[idx + 1].get("nucleus")
+            ),
+        )
+
+        tone_mark = tone_marks[tone]
+        if tone_mark:
+            vowel_index = next(
+                (
+                    index
+                    for index in range(len(vie_syl) - 1, -1, -1)
+                    if normalize_nfd(vie_syl[index])[0].lower()
+                    in "aeiouy"
+                ),
+                None,
+            )
+            if vowel_index is None:
+                raise ValueError(
+                    f"cannot apply tone {tone} to syllable {vie_syl!r}"
+                )
+
+            vowel = vie_syl[vowel_index]
+            vie_syl = (
+                vie_syl[:vowel_index]
+                + normalize_nfc(normalize_nfd(vowel) + tone_mark)
+                + vie_syl[vowel_index + 1:]
+            )
+
+        if idx != 0 and vie_syl:
+            vie_parts.append("-")
+
+        vie_parts.append(vie_syl)
+
+    return "".join(vie_parts)
+
+def pinyin_to_vie(
+    pinyin: str,
+    options: dict | None = None,
+    *,
+    mode: RuleMode,
+) -> dict:
+    """Parse and convert one pinyin word without IPA or stress processing."""
+
+    options = {**(options or {}), "language": "ch"}
+    _rules_for_mode(mode, "ch")
+
+    try:
+        ast = parse_pinyin(pinyin)
+    except ParseError as error:
+        raise ValueError(
+            f"could not parse pinyin input: {pinyin!r}"
+        ) from error
+
+    vie = _convert_tonal_ast_to_vie(ast, options, mode)
+
+    return {
+        "pinyin": pinyin,
+        "ast": ast,
+        "vie": vie,
+    }

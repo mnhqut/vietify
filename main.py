@@ -10,11 +10,11 @@ from phonemizer import phonemize
 from typing import cast
 
 if __package__:
-    from .converter import _apply_french_liaison, ipa_to_vie
+    from .converter import _apply_french_liaison, ipa_to_vie, pinyin_to_vie
 else:
     # Allow ``python main.py`` when this file is run from the package folder.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from vietify.converter import _apply_french_liaison, ipa_to_vie
+    from vietify.converter import _apply_french_liaison, ipa_to_vie, pinyin_to_vie
 
 
 PHONEMIZER_LANGUAGES = {
@@ -26,7 +26,6 @@ PHONEMIZER_LANGUAGES = {
     "de": "de",
     "ru": "ru", 
 
-    "ch": "cmn",
     "ja": "ja",
     "ko": "ko",
 }
@@ -93,10 +92,10 @@ def text_to_vietify(
     language: str,
     mode: OutputMode,
 ) -> str:
-    if language == "ipa":
-        ipa = text
+    if language in {"ch", "ipa"}:
+        pronunciation = text
     else:
-        ipa = cast(
+        pronunciation = cast(
             str,
             phonemize(
                 text,
@@ -110,17 +109,18 @@ def text_to_vietify(
         )
 
     if mode == "ipa":
-        return ipa
-    
-    ipa = normalize_phonemized_ipa(
-        ipa,
-        language,
-        preserve_nasalization=language == "fr",
-    )
+        return pronunciation
+
+    if language != "ch":
+        pronunciation = normalize_phonemized_ipa(
+            pronunciation,
+            language,
+            preserve_nasalization=language == "fr",
+        )
 
     converted_words = []
 
-    for word in ipa.split():
+    for word in pronunciation.split():
         match = re.match(
             r"^([^\w\u0300-\u036f]*)(.*?)([^\w\u0300-\u036f]*)$",
             word,
@@ -133,23 +133,27 @@ def text_to_vietify(
 
         leading, pronunciation, trailing = match.groups()
 
-        results = ipa_to_vie(
-            pronunciation,
-            {"language": language},
-            mode=mode,
-        )
-
-        if not results:
-            raise ValueError(
-                f"could not convert IPA text: {pronunciation!r}"
+        if language == "ch":
+            vie = pinyin_to_vie(
+                pronunciation,
+                mode=mode,
+            )["vie"]
+        else:
+            results = ipa_to_vie(
+                pronunciation,
+                {"language": language},
+                mode=mode,
             )
+
+            if not results:
+                raise ValueError(
+                    f"could not convert IPA text: {pronunciation!r}"
+                )
+
+            vie = "-".join(result["vie"] for result in results)
 
         converted_words.append({
-            "vie": (
-                leading
-                + "-".join(result["vie"] for result in results)
-                + trailing
-            )
+            "vie": leading + vie + trailing
         })
 
     if language == "fr":
@@ -166,7 +170,10 @@ def main() -> int:
     parser.add_argument(
         "text",
         nargs="+",
-        help="Text to convert, or IPA text when --language=ipa.",
+        help=(
+            "Text to convert, pinyin when --language=ch, or IPA when "
+            "--language=ipa."
+        ),
     )
     parser.add_argument(
         "-l",
@@ -187,7 +194,7 @@ def main() -> int:
         help=(
             "Input language: en-gb (British English), en-us (American English), "
             "en-au (Australian English), fr (French), de (German), ru (Russian), "
-            "ch (Chinese), ja (Japanese), ko (Korean), or ipa (already-transcribed IPA). "
+            "ch (Chinese pinyin), ja (Japanese), ko (Korean), or ipa (already-transcribed IPA). "
             "Default: en-us."
         ),
     )
@@ -198,7 +205,7 @@ def main() -> int:
         default="weak",
         help=(
             "Output mode: weak, strong, or ipa. "
-            "ipa only phonemizes input without Vietify conversion. "
+            "ipa outputs the pronunciation input without Vietify conversion. "
             "Default: weak."
         ),
     )
