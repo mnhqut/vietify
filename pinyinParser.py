@@ -6,7 +6,9 @@ from parsimonious.nodes import NodeVisitor
 
 
 grammar = Grammar(r"""
-Word = ws "/"? (Syllable ws)* "/"? ws
+Word = ws "/"? (Syllable ws)* "/"? ws 
+# Word = ws "/"? Syllable* "/"? ws
+# concatenated Pinyin creates segmentation ambiguity: liang'an vs li'an
 ws = " "*
 
 
@@ -92,6 +94,8 @@ Glide =
 
 TrueDiphthong =
       "ei"
+    / "iao"
+    / "uai"
     / "ou"
     / "ai"
     / "ao"
@@ -102,10 +106,9 @@ TrueDiphthong =
     / "ie"
     / "io"
     / "ia"
-    / "iao"
     / "uo"
     / "ui"
-    / "uai"
+    
 
 """)
 
@@ -303,6 +306,7 @@ def strip_tone_marks(text):
 
 def parse_syllable_text(text):
     """Normalize one Pinyin syllable."""
+    text = text.lower()
     text, tone = strip_tone_marks(text)
 
     # j/q/x + u = ü

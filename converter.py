@@ -534,6 +534,54 @@ def ipa_to_vie(
 
     return results
 
+def add_tonal_mark_to_vowel(vie: str, tonal_mark: str) -> str:
+    """Attach tonal mark to the preferred Vietnamese nucleus vowel."""
+
+    # Multi-vowel nuclei where the tone belongs on the second vowel.
+    for pattern in ("ươ", "uô", "iê", "yê", "uê"):
+        match = re.search(pattern, vie, re.IGNORECASE)
+        if match:
+            vowel_index = match.end() - 1
+            vowel = vie[vowel_index]
+            return (
+                vie[:vowel_index]
+                + normalize_nfc(vowel + tonal_mark)
+                + vie[vowel_index + 1:]
+            )
+
+    # Vowels with inherent Vietnamese quality marks.
+    match = re.search(r"[âăêôơư]", vie, re.IGNORECASE)
+    if match:
+        vowel = match.group()
+        return (
+            vie[:match.start()]
+            + normalize_nfc(vowel + tonal_mark)
+            + vie[match.end():]
+        )
+
+    # Ordinary diphthongs/triphthongs: tone goes on the first vowel.
+    match = re.search(r"[aeiou]", vie, re.IGNORECASE)
+    if match:
+        vowel = match.group()
+        return (
+            vie[:match.start()]
+            + normalize_nfc(vowel + tonal_mark)
+            + vie[match.end():]
+        )
+
+    # Final fallback.
+    match = re.search(r"y", vie, re.IGNORECASE)
+    if match:
+        vowel = match.group()
+        return (
+            vie[:match.start()]
+            + normalize_nfc(vowel + tonal_mark)
+            + vie[match.end():]
+        )
+
+    return vie
+
+
 def _convert_tonal_ast_to_vie(
     ast: list[dict],
     options: dict,
@@ -574,27 +622,22 @@ def _convert_tonal_ast_to_vie(
         )
 
         tone_mark = tone_marks[tone]
+
         if tone_mark:
-            vowel_index = next(
-                (
-                    index
-                    for index in range(len(vie_syl) - 1, -1, -1)
-                    if normalize_nfd(vie_syl[index])[0].lower()
-                    in "aeiouy"
-                ),
-                None,
+            original = vie_syl
+            vie_syl = add_tonal_mark_to_vowel(
+                vie=vie_syl,
+                tonal_mark=tone_mark,
             )
-            if vowel_index is None:
+
+            if vie_syl == original and not re.search(
+                r"[aeiouyâăêôơư]",
+                vie_syl,
+                re.IGNORECASE,
+            ):
                 raise ValueError(
                     f"cannot apply tone {tone} to syllable {vie_syl!r}"
                 )
-
-            vowel = vie_syl[vowel_index]
-            vie_syl = (
-                vie_syl[:vowel_index]
-                + normalize_nfc(normalize_nfd(vowel) + tone_mark)
-                + vie_syl[vowel_index + 1:]
-            )
 
         if idx != 0 and vie_syl:
             vie_parts.append("-")
@@ -602,6 +645,7 @@ def _convert_tonal_ast_to_vie(
         vie_parts.append(vie_syl)
 
     return "".join(vie_parts)
+
 
 def pinyin_to_vie(
     pinyin: str,
